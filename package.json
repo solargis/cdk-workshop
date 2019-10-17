@@ -3,12 +3,17 @@
   "version": "0.1.0",
   "scripts": {},
   "devDependencies": {
+    "@types/app-root-path": "^1.2.4",
+    "@types/node": "^12.11.1",
     "aws-cdk": "^1.13.1",
     "ts-node": "^8.1.0",
     "typescript": "~3.6.2"
   },
   "dependencies": {
+    "@aws-cdk/aws-s3": "^1.13.1",
+    "@aws-cdk/aws-s3-deployment": "^1.13.1",
     "@aws-cdk/core": "^1.13.1",
+    "app-root-path": "^2.2.1",
     "aws-sdk": "^2.552.0",
     "source-map-support": "^0.5.9"
   }
