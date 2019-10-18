@@ -1,0 +1,72 @@
+
+@mixin fill-color($color) {
+  & {
+    background-color: $color;
+
+    .pin-marker-fill {
+      fill: $color;
+    }
+  }
+}
+
+$width: 64px;
+$height: 64px;
+
+:host ::ng-deep {
+  .marker-wrapper-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+  }
+
+  .marker-container {
+    border: white solid 2px;
+    border-radius: 3px;
+    color: white;
+    width: $width;
+    height: $height;
+
+    @include fill-color(#4d5b73);
+
+    &.selected { @include fill-color(#f44336); }
+  }
+
+  .content {
+    position: relative;
+    text-align: center;
+    width: $width - 4px;
+    height: $height - 4px;
+    margin: 2px;
+    overflow: hidden;
+
+    & > img {
+      position: absolute;
+      left: -1000%;
+      right: -1000%;
+      top: -1000%;
+      bottom: -1000%;
+      margin: auto;
+    }
+
+    & > mat-icon {
+      padding-top: 18px;
+    }
+  }
+
+  #arrow {
+    position: absolute;
+    left: 26px;
+    width: 14px;
+    bottom: -8px;
+
+    .pin-marker-border {
+      fill: #fff;
+    }
+  }
+
+  mat-progress-spinner {
+    display: inline-block;
+    margin: 0 auto;
+    margin-top: 12px;
+  }
+}

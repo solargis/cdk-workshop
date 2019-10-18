@@ -18,6 +18,7 @@ import { AppComponent } from './components/app.component';
 import { HeaderComponent } from './components/header.component';
 import { ImageComponent } from './components/image.component';
 import { MapComponent } from './components/map.component';
+import { PinMarkerComponent } from './components/pin-marker.component';
 import { SearchComponent } from './components/search.component';
 import { SidebarComponent } from './components/sidebar.component';
 import { ImageInputComponent } from './components/image-input.component';
@@ -35,6 +36,7 @@ import { PinApiService } from './services/pin-api.service';
     ImageComponent,
     ImageInputComponent,
     MapComponent,
+    PinMarkerComponent,
     SearchComponent,
     SidebarComponent
   ],
@@ -62,6 +64,7 @@ import { PinApiService } from './services/pin-api.service';
     PinApiService,
     { provide: Config, useFactory: configFactory, deps: [Meta] }
   ],
+  entryComponents: [PinMarkerComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule {

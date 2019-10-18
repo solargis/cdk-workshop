@@ -5,10 +5,13 @@ import { Image, SavedImage, SavedPin } from '../../shared/types/pin.types';
 
 const imageBucket = process.env.IMAGE_BUCKET as string;
 
+const region = process.env.AWS_REGION;
+
 const s3 = new S3();
 
 export async function saveImageToS3(s3key: string, unsavedImage: Image & { dataBuffer?: Buffer }): Promise<SavedImage> {
   const { dataUrl, dataBuffer, ...imageFields } = unsavedImage;
+  const isPublic = s3key.startsWith('thumbnail');
 
   console.log(`Saving image to S3: ${s3key}`);
 
@@ -18,10 +21,12 @@ export async function saveImageToS3(s3key: string, unsavedImage: Image & { dataB
     ContentType: unsavedImage.type,
     Body: dataUrl
       ? dataUrlToBuffer(dataUrl as string, unsavedImage.type)
-      : dataBuffer
+      : dataBuffer,
+    ACL: isPublic ? 'public-read' : undefined
   }).promise();
 
-  return { ...imageFields, s3key };
+  const url = isPublic ? getPublicUrl(s3key) : undefined;
+  return { ...imageFields, s3key, url };
 }
 
 export async function deleteImageFromS3(pin: SavedPin) {
@@ -30,6 +35,13 @@ export async function deleteImageFromS3(pin: SavedPin) {
     await s3.deleteObjects({
       Bucket: imageBucket,
       Delete: { Objects: [{ Key: pin.image.s3key }] }
+    }).promise();
+  }
+  if (pin.thumbnail) {
+    console.log('Deleting pin thumbnail from S3: ', pin.thumbnail.s3key);
+    await s3.deleteObjects({
+      Bucket: imageBucket,
+      Delete: { Objects: [{ Key: pin.thumbnail.s3key }] }
     }).promise();
   }
 }
@@ -66,10 +78,14 @@ function dataUrlToBuffer(dataUrl: string, type: string): Buffer {
   return Buffer.from(base64, 'base64');
 }
 
+function getPublicUrl(s3key: string): string {
+  return `https://${imageBucket}.s3-${region}.amazonaws.com/${s3key}`;
+}
+
 function getDownloadUrl(s3key: string, name: string) {
   return s3.getSignedUrl('getObject', {
       Bucket: imageBucket,
       Key: s3key,
       ResponseContentDisposition: `attachment; filename="${name}"`
-    });
+    })
 }

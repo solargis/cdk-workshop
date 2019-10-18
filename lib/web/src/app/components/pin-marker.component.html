@@ -1,0 +1,19 @@
+<div #marker>
+  <div class="marker-wrapper-container">
+    <div class="marker-container" [ngClass]="{ 'selected': selected$ | async  }">
+      <!-- content -->
+      <div class="content">
+        <img *ngIf="thumbnail?.url, else noThumbnail" [src]="thumbnail?.url">
+        <ng-template #noThumbnail>
+          <mat-progress-spinner mode="indeterminate" [diameter]="32" [strokeWidth]="4"></mat-progress-spinner>
+        </ng-template>
+      </div>
+      <!-- arrow -->
+      <svg version="1.1" id="arrow" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+           width="18px" height="10px" viewBox="0 2 18 10" style="enable-background:new 0 0 18 12;" xml:space="preserve">
+        <path class="pin-marker-border" d="M0,0v0.101l7.309,10.958C7.663,11.622,8.285,12,9,12s1.337-0.378,1.691-0.942L18,0.101V0H0z"/>
+        <polygon class="pin-marker-fill" points="15,0 9,10 3,1 2,0 16,0 "/>
+      </svg>
+    </div>
+  </div>
+</div>

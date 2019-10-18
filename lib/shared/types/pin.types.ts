@@ -29,4 +29,5 @@ export interface SavedPin extends Pin {
   sourceIp: string;
   created: number;
   image?: SavedImage;
+  thumbnail?: SavedImage;
 }

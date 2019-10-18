@@ -7,8 +7,10 @@ import * as isEqual from 'lodash.isequal';
 import { Observable, Subscription } from 'rxjs';
 import { distinctUntilChanged, filter, first, map, withLatestFrom } from 'rxjs/operators';
 
+import { PinMarkerComponent } from './pin-marker.component';
 import { PinFromMap, PinState } from '../state/pin.state';
 import { diffArrays } from '../utils/array.utils';
+import { CustomIcon } from '../utils/leaflet.utils';
 import { simpleChange } from '../utils/simple-change.operator';
 import { PinPoint, Pin, SavedPin } from 'shared/types/pin.types';
 
@@ -141,13 +143,24 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
 
   private createPinMarker(pin: SavedPin): L.Marker {
     const pinMarker = L.marker(pin.point, { draggable: false, zIndexOffset: 100 });
-
-    pinMarker.on('click', event => {
-      console.log('***', event);
-      this.store.dispatch(new PinFromMap(event.latlng));
-    })
-
+    const icon = this.createPinMarkerIcon(pin.pointUrl);
+    pinMarker.setIcon(new CustomIcon({ nativeElement: icon.location.nativeElement }));
     return pinMarker;
   }
+
+  public createPinMarkerIcon(pointUrl: string): ComponentRef<PinMarkerComponent> {
+    const inputProviders = [{ provide: 'pointUrl', useValue: pointUrl }];
+    let injector = Injector.create({ providers: inputProviders, parent: this.injector });
+
+    const compFactory = this.resolver.resolveComponentFactory(PinMarkerComponent);
+    const pinMarkerIcon: ComponentRef<PinMarkerComponent> = compFactory.create(injector);
+
+    this.appRef.attachView(pinMarkerIcon.hostView);
+    pinMarkerIcon.instance.onDestroyCallback = () => {
+      this.appRef.detachView(pinMarkerIcon.hostView);
+    };
+    return pinMarkerIcon;
+  }
+
 
 }
