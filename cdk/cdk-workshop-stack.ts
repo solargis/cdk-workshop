@@ -35,7 +35,7 @@ export class CdkWorkshopStack extends Stack {
 
     webBucket.grantPublicAccess();
 
-    const webSource = Source.asset(resolve(rootPath, 'lib/web'));
+    const webSource = Source.asset(resolve(rootPath, 'dist/web'));
 
     const webDeployment = new BucketDeployment(this, 'WebDeployment', {
       sources: [webSource],

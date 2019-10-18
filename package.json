@@ -2,7 +2,9 @@
   "name": "cdk-workshop",
   "version": "0.1.0",
   "scripts": {
-    "api:build": "tsc -p lib/tsconfig.api.json"
+    "build": "npm run api:build && npm run web:build",
+    "api:build": "trash dist/api && tsc -p lib/tsconfig.api.json",
+    "web:build": "trash dist/web && ng build --aot --prod"
   },
   "devDependencies": {
     "@angular-devkit/build-angular": "^0.803.12",
