@@ -21,6 +21,7 @@
     "app-root-path": "^2.2.1",
     "aws-lambda": "^0.1.2",
     "aws-sdk": "^2.552.0",
+    "cfn-response": "^1.0.1",
     "source-map-support": "^0.5.9"
   }
 }

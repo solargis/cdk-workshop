@@ -6,6 +6,8 @@ import { BucketDeployment, Source } from '@aws-cdk/aws-s3-deployment';
 import { path as rootPath } from 'app-root-path';
 import { resolve } from 'path';
 
+import { WebIndex } from './web-index';
+
 export interface CdkWorkshopStackProps extends StackProps {
   userName: string;
 }
@@ -35,10 +37,18 @@ export class CdkWorkshopStack extends Stack {
 
     const webSource = Source.asset(resolve(rootPath, 'lib/web'));
 
-    new BucketDeployment(this, 'WebDeployment', {
+    const webDeployment = new BucketDeployment(this, 'WebDeployment', {
       sources: [webSource],
       destinationBucket: webBucket
     });
+
+    const webIndex = new WebIndex(this, 'WebIndex', {
+      apiBaseUrl: api.url,
+      source: webSource,
+      bucket: webBucket
+    });
+
+    webIndex.node.addDependency(webDeployment);
 
     new CfnOutput(this, 'WebBucketUrl', {
       value: webBucket.bucketWebsiteUrl
