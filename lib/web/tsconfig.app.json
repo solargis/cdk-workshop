@@ -1,0 +1,15 @@
+{
+  "extends": "../tsconfig.web.json",
+  "compilerOptions": {
+    "outDir": "../../out-tsc/web",
+    "types": []
+  },
+  "files": [
+    "src/main.ts",
+    "src/polyfills.ts"
+  ],
+  "include": [
+    "src/**/*.ts"
+  ]
+}
+
