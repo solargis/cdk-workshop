@@ -1,0 +1,9 @@
+@import '~leaflet/dist/leaflet.css';
+
+div[map] {
+  height: 100%;
+}
+
+.leaflet-container {
+  cursor: crosshair;
+}
