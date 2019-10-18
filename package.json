@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "scripts": {
     "build": "npm run api:build && npm run web:build",
-    "api:build": "trash dist/api && tsc -p lib/tsconfig.api.json",
+    "api:build": "trash dist/api && webpack --config lib/webpack.api.js",
     "web:build": "trash dist/web && ng build --aot --prod"
   },
   "devDependencies": {
