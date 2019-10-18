@@ -6,8 +6,14 @@ import { Image, SavedImage, SavedPin } from '../../shared/types/pin.types';
 const imageBucket = process.env.IMAGE_BUCKET as string;
 
 const region = process.env.AWS_REGION;
+const localEndpoint = process.env.S3_ENDPOINT as any;
 
-const s3 = new S3();
+const s3 = new S3(localEndpoint && {
+  accessKeyId: 'S3RVER',
+  secretAccessKey: 'S3RVER',
+  region: 'local',
+  endpoint: localEndpoint
+});
 
 export async function saveImageToS3(s3key: string, unsavedImage: Image & { dataBuffer?: Buffer }): Promise<SavedImage> {
   const { dataUrl, dataBuffer, ...imageFields } = unsavedImage;
@@ -79,11 +85,15 @@ function dataUrlToBuffer(dataUrl: string, type: string): Buffer {
 }
 
 function getPublicUrl(s3key: string): string {
-  return `https://${imageBucket}.s3-${region}.amazonaws.com/${s3key}`;
+  return localEndpoint
+    ? `${localEndpoint}/${imageBucket}/${s3key}`
+    : `https://${imageBucket}.s3-${region}.amazonaws.com/${s3key}`;
 }
 
 function getDownloadUrl(s3key: string, name: string) {
-  return s3.getSignedUrl('getObject', {
+  return localEndpoint
+    ? `${localEndpoint}/${imageBucket}/${s3key}`
+    : s3.getSignedUrl('getObject', {
       Bucket: imageBucket,
       Key: s3key,
       ResponseContentDisposition: `attachment; filename="${name}"`

@@ -9,7 +9,9 @@ import { pointToUrl } from '../shared/utils/point.utils';
 
 const pinTable = process.env.PIN_TABLE as string;
 
-const dynamo = new DynamoDB.DocumentClient();
+const dynamo = new DynamoDB.DocumentClient({
+  endpoint: process.env.DYNAMODB_ENDPOINT
+});
 
 export async function handler(event: APIGatewayProxyEvent, context: Context) {
   context.callbackWaitsForEmptyEventLoop = false;

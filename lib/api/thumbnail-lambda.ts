@@ -9,9 +9,11 @@ import { copyFromS3, saveImageToS3 } from './utils/s3.utils';
 import { SavedImage } from '../shared/types/pin.types';
 
 const pinTable = process.env.PIN_TABLE as string;
-const tempDir = '/tmp';
+const tempDir = process.env.TEMP_DIR || '/tmp';
 
-const dynamo = new DynamoDB.DocumentClient();
+const dynamo = new DynamoDB.DocumentClient({
+  endpoint: process.env.DYNAMODB_ENDPOINT
+});
 
 export function handler(event: S3CreateEvent, context: Context, callback: Callback) {
 
