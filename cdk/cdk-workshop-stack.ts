@@ -1,4 +1,5 @@
 import { LambdaIntegration, RestApi } from '@aws-cdk/aws-apigateway';
+import { CloudFrontWebDistribution, CloudFrontWebDistributionProps, PriceClass } from '@aws-cdk/aws-cloudfront';
 import { CfnOutput, Construct, Duration, RemovalPolicy, Stack, StackProps } from '@aws-cdk/core';
 import { AttributeType, BillingMode, Table } from '@aws-cdk/aws-dynamodb';
 import { Code, Function, LayerVersion, Runtime } from '@aws-cdk/aws-lambda';
@@ -126,5 +127,27 @@ export class CdkWorkshopStack extends Stack {
     new CfnOutput(this, 'WebBucketUrl', {
       value: webBucket.bucketWebsiteUrl
     });
+
+    // CDN
+
+    const cloudFrontProps: CloudFrontWebDistributionProps = {
+      priceClass: PriceClass.PRICE_CLASS_100,
+      originConfigs: [{
+        s3OriginSource: { s3BucketSource: webBucket },
+        behaviors: [
+          {
+            pathPattern: 'index.html',
+            defaultTtl: Duration.seconds(0),
+            maxTtl: Duration.seconds(0),
+            minTtl: Duration.seconds(0)
+          },
+          { isDefaultBehavior: true }
+        ]
+      }]
+    };
+
+    const cloudFront = new CloudFrontWebDistribution(this, 'WebDistribution', cloudFrontProps);
+
+    new CfnOutput(this, 'WebDistributionDomainName', { value: cloudFront.domainName });
   }
 }
