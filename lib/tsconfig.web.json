@@ -17,5 +17,8 @@
   "angularCompilerOptions": {
     "fullTemplateTypeCheck": true,
     "strictInjectionParameters": true
+  },
+  "paths": {
+    "shared/*": ["shared"]
   }
 }
