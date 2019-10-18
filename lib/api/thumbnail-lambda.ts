@@ -11,9 +11,7 @@ import { SavedImage } from '../shared/types/pin.types';
 const pinTable = process.env.PIN_TABLE as string;
 const tempDir = '/tmp';
 
-const dynamo = new DynamoDB.DocumentClient({
-  endpoint: process.env.DYNAMODB_ENDPOINT
-});
+const dynamo = new DynamoDB.DocumentClient();
 
 export function handler(event: S3CreateEvent, context: Context, callback: Callback) {
 
