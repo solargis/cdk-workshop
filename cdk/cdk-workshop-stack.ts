@@ -1,9 +1,10 @@
 import { LambdaIntegration, RestApi } from '@aws-cdk/aws-apigateway';
-import { CfnOutput, Construct, RemovalPolicy, Stack, StackProps } from '@aws-cdk/core';
+import { CfnOutput, Construct, Duration, RemovalPolicy, Stack, StackProps } from '@aws-cdk/core';
 import { AttributeType, BillingMode, Table } from '@aws-cdk/aws-dynamodb';
-import { Code, Function, Runtime } from '@aws-cdk/aws-lambda';
-import { Bucket } from '@aws-cdk/aws-s3';
+import { Code, Function, LayerVersion, Runtime } from '@aws-cdk/aws-lambda';
+import { Bucket, EventType } from '@aws-cdk/aws-s3';
 import { BucketDeployment, Source } from '@aws-cdk/aws-s3-deployment';
+import { LambdaDestination } from '@aws-cdk/aws-s3-notifications';
 import { path as rootPath } from 'app-root-path';
 import { resolve } from 'path';
 
@@ -50,6 +51,35 @@ export class CdkWorkshopStack extends Stack {
     });
     imageBucket.grantReadWrite(pinHandler);
     pinTable.grantReadWriteData(pinHandler);
+
+    const sharpLayer = new LayerVersion(this, `SharpLayer_${props.userName}`, {
+      code: Code.fromAsset('lib/layers/sharp_layer.zip'),
+      compatibleRuntimes: [Runtime.NODEJS_10_X],
+      license: 'Apache-2.0',
+      description: 'Sharp image processing library v.0.23.1'
+    });
+
+    const thumbnailHandler = new Function(this, 'ThumbnailHandler', {
+      code: apiCode,
+      runtime: Runtime.NODEJS_10_X,
+      handler: 'thumbnail-lambda.handler',
+      layers: [sharpLayer],
+      memorySize: 1536,
+      timeout: Duration.seconds(60),
+      environment: {
+        IMAGE_BUCKET: imageBucket.bucketName,
+        PIN_TABLE: pinTable.tableName
+      }
+    });
+    imageBucket.grantReadWrite(thumbnailHandler);
+    pinTable.grantReadWriteData(thumbnailHandler);
+
+    // S3 integration
+    imageBucket.addEventNotification(
+      EventType.OBJECT_CREATED,
+      new LambdaDestination(thumbnailHandler),
+      { prefix: 'original' }
+    );
 
     const api = new RestApi(this, `CdkWorkshopAPI_${props.userName}`);
 
