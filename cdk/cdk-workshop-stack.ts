@@ -4,8 +4,12 @@ import { BucketDeployment, Source } from '@aws-cdk/aws-s3-deployment';
 import { path as rootPath } from 'app-root-path';
 import { resolve } from 'path';
 
+export interface CdkWorkshopStackProps extends StackProps {
+  userName: string;
+}
+
 export class CdkWorkshopStack extends Stack {
-  constructor(scope: Construct, id: string, props?: StackProps) {
+  constructor(scope: Construct, id: string, props: CdkWorkshopStackProps) {
     super(scope, id, props);
 
     const webBucket = new Bucket(this, 'WebBucket', {
