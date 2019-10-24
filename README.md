@@ -31,3 +31,5 @@ Online application [DEMO](https://cdk-workshop.solargis.com)
 
 
 Follow [instructions on project wiki](https://github.com/solargis/cdk-workshop/wiki/Overview)
+
+Link to [slides](https://slides.com/misomoravcik/cdk-workshop)
