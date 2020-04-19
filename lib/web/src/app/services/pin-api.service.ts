@@ -31,7 +31,7 @@ export class PinApiService {
   
   getPin(pointUrl: string): Observable<SavedPin> {
     return this.http
-      .get<SavedPin>(this.pinApiUrl + '/' + pointUrl)  ;    this.http.get<SavedPin>(this.pinApiUrl + '/' + pointUrl);
+      .get<SavedPin>(this.pinApiUrl + '/' + pointUrl);
   }
   
 }
