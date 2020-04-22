@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
-import { Select } from '@ngxs/store';
+import { Select, Store } from '@ngxs/store';
 import { Observable } from 'rxjs';
 
-import { PinState } from '../state/pin.state';
-import { Pin } from 'shared/types/pin.types';
+import { PinState, PinFromMap } from '../state/pin.state';
+import { Pin, PinPoint } from 'shared/types/pin.types';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -50,7 +51,24 @@ import { Pin } from 'shared/types/pin.types';
       </div>`
 })
 export class AppComponent {
-  
+
   @Select(PinState.selectedPin) selectedPin$: Observable<Pin>;
-  
+  @Select(PinState.pins) pins$: Observable<[Pin]>;
+  constructor(private store: Store) {
+    this.pins$.pipe(take(2)).subscribe((data) => {
+      this.processPointFromURL();
+    });
+  }
+
+  processPointFromURL() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pointStr = urlParams.get('p');
+    if(pointStr) {
+      const pointParts = pointStr.split(',');
+      if(pointParts.length === 2) {
+        const point: PinPoint = {lat: parseFloat(pointParts[0]), lng: parseFloat(pointParts[1])}
+        this.store.dispatch(new PinFromMap(point));
+      }
+    }
+  }
 }

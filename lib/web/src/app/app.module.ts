@@ -11,6 +11,9 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BrowserModule, Meta } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
+
 import { NgxsModule } from '@ngxs/store';
 import { FileSizeModule } from 'ngx-filesize';
 
@@ -27,6 +30,7 @@ import { NominatimService } from './services/nominatim.service';
 import { PinState } from './state/pin.state';
 import { environment } from '../environments/environment';
 import { PinApiService } from './services/pin-api.service';
+import { ShareDialogComponent } from './components/share-dialog.component';
 
 
 @NgModule({
@@ -38,7 +42,8 @@ import { PinApiService } from './services/pin-api.service';
     MapComponent,
     PinMarkerComponent,
     SearchComponent,
-    SidebarComponent
+    SidebarComponent,
+    ShareDialogComponent
   ],
   imports: [
     BrowserModule,
@@ -50,11 +55,13 @@ import { PinApiService } from './services/pin-api.service';
     MatAutocompleteModule,
     MatButtonModule,
     MatCardModule,
+    MatDialogModule,
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
     NgxsModule.forRoot([PinState], {
       developmentMode: !environment.production
     })
@@ -64,7 +71,7 @@ import { PinApiService } from './services/pin-api.service';
     PinApiService,
     { provide: Config, useFactory: configFactory, deps: [Meta] }
   ],
-  entryComponents: [PinMarkerComponent],
+  entryComponents: [PinMarkerComponent, ShareDialogComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule {
