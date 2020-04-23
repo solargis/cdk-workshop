@@ -1,0 +1,21 @@
+{
+  "header": {
+    "title": "CDK FULLSTACK WORKSHOP (SK)",
+    "searchPlaceholder":"Klikni do mapy alebo hladaj tu"
+  },
+  "pinDetail": {
+    "latitude": "šírka",
+    "length":"dĺžka",
+    "created":"vytvorené",
+    "address":"adresa"
+  },
+  "sidebar": {
+    "pinImage": "Pripni obrázok",
+    "downloadImage":"Stiahni obrázok",
+    "deletePin":"Vymaž pripnutie"
+  },
+  "lang": {
+    "sk": "Slovenský",
+    "en": "Anglický"
+  }
+}

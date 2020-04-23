@@ -35,6 +35,7 @@ import { ShareDialogComponent } from './components/share-dialog.component';
 import { AppRoutingModule } from './app-routing.module';
 import { PinDetailComponent } from './components/pin-detail.component';
 import { MapWrapperComponent } from './components/map-wrapper.component';
+import { TranslocoRootModule } from './transloco-root.module';
 
 
 @NgModule({
@@ -72,7 +73,8 @@ import { MapWrapperComponent } from './components/map-wrapper.component';
     AppRoutingModule,
     NgxsModule.forRoot([PinState], {
       developmentMode: !environment.production
-    })
+    }),
+    TranslocoRootModule
   ],
   providers: [
     NominatimService,

@@ -49,14 +49,14 @@ import { ShareDialogComponent } from './share-dialog.component';
           </mat-card-subtitle>
           <div style="display:flex">
               <button mat-raised-button *ngIf="!unsavedImage && !pin.image" color="primary" (click)="selectImage()">
-                  Pin Image
+                  {{'sidebar.pinImage' | transloco}}
               </button>
               <mat-progress-bar *ngIf="unsavedImage" mode="indeterminate" color="accent"></mat-progress-bar>
               <a mat-button *ngIf="pin.image?.url" color="primary" [href]="pin.image.url" target="_blank">
-                  Download Image
+              {{'sidebar.downloadImage' | transloco}}
               </a>
               <button mat-button *ngIf="!unsavedImage && pin.pointUrl" color="warn" (click)="deletePin()">
-                  Delete Pin
+              {{'sidebar.deletePin' | transloco}}
               </button>
           </div>
           <div class="image">

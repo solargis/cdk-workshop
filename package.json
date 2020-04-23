@@ -53,6 +53,8 @@
     "@aws-cdk/aws-s3-deployment": "^1.14.0",
     "@aws-cdk/aws-s3-notifications": "^1.14.0",
     "@aws-cdk/core": "^1.14.0",
+    "@ngneat/transloco": "^2.16.1",
+    "@ngneat/transloco-locale": "^1.2.1",
     "@ngxs/store": "^3.5.1",
     "app-root-path": "^2.2.1",
     "aws-lambda": "^0.1.2",

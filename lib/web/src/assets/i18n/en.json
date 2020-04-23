@@ -1,0 +1,21 @@
+{
+  "header": {
+    "title": "CDK FULLSTACK WORKSHOP",
+    "searchPlaceholder":"Click into the map or search here"
+  },
+  "pinDetail": {
+    "latitude": "latitude",
+    "length":"length",
+    "created":"created",
+    "address":"address"
+  },
+  "sidebar": {
+    "pinImage": "Pin Image",
+    "downloadImage":"Download Image",
+    "deletePin":"Delete Pin"
+  },
+  "lang": {
+    "sk": "Slovak",
+    "en": "English"
+  }
+}

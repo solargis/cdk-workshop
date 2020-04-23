@@ -33,13 +33,13 @@ import { MatSnackBar } from '@angular/material/snack-bar';
   <div *ngIf="(selectedPin$ | async) as pin">
     <img [src]="pin.image?.url">
     <dl>
-      <dt>latitude</dt>
+      <dt>{{'pinDetail.latitude' | transloco }}</dt>
       <dd>{{toDMS(pin.point?.lat)}}</dd>
-      <dt>length</dt>
+      <dt>{{'pinDetail.length' | transloco }}</dt>
       <dd>{{toDMS(pin.point?.lng)}}</dd>
-      <dt>created</dt>
-      <dd>{{date(pin.created)}}</dd>
-      <dt>address</dt>
+      <dt>{{'pinDetail.created' | transloco }}</dt>
+      <dd>{{pin.created | translocoDate: { dateStyle: 'medium' } }}</dd>
+      <dt>{{'pinDetail.address' | transloco }}</dt>
       <dd>{{pin.address?.display_name}}</dd>
     </dl>
   </div>
@@ -71,10 +71,6 @@ export class PinDetailComponent implements OnDestroy {
 
   toDMS(value: number, precision = 0) {
     return toDMS(value, precision);
-  }
-
-  date(time: number) {
-    return new Date(time).toDateString();
   }
 
   close(): void {

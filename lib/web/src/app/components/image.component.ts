@@ -25,7 +25,7 @@ import { Image, SavedImage } from 'shared/types/pin.types';
           </div>
           <div class="bottom">
               <div>{{ image.size | filesize }}</div>
-              <div>{{ image.lastModified | date }}</div>
+              <div>{{ image.lastModified | translocoDate: { dateStyle: 'medium' } }}</div>
           </div>
       </ng-container>
   `
@@ -33,13 +33,13 @@ import { Image, SavedImage } from 'shared/types/pin.types';
 export class ImageComponent implements OnChanges {
 
   @Input() image: Partial<SavedImage>;
-  
+
   loading = true;
-  
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.image && this.image) {
       this.loading = true;
     }
   }
-  
+
 }

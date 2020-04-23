@@ -1,5 +1,5 @@
 import { Component, HostListener, Input, OnInit } from '@angular/core';
-
+import { TranslocoService } from '@ngneat/transloco';
 import { Pin } from 'shared/types/pin.types';
 
 @Component({
@@ -30,7 +30,7 @@ import { Pin } from 'shared/types/pin.types';
           <a href="https://solargis.com" target="_blank">
               <img src="assets/solargis.svg">
           </a>
-          <div class="title">CDK FULLSTACK WORKSHOP</div>
+          <div class="title">{{'header.title' | transloco}}</div>
       </ng-container>
       <button mat-button *ngIf="!isDesktop" (click)="searchActive = true">
           <mat-icon>search</mat-icon>
@@ -38,22 +38,35 @@ import { Pin } from 'shared/types/pin.types';
       <div class="search" *ngIf="isDesktop || searchActive">
           <app-search [pin]="pin" [(searchActive)]="searchActive"></app-search>
       </div>
+      <select (change)="changeLang()" [(ngModel)]="lang">
+        <option *ngFor="let lang of translocoService.getAvailableLangs()" [value]="lang">
+          {{'lang.'+lang | transloco}}
+        </option>
+      </select>
   `
 })
 export class HeaderComponent implements OnInit {
+  lang: string;
+  constructor(public translocoService: TranslocoService){
+    this.lang = translocoService.getActiveLang();
+  }
 
   @Input() pin: Pin;
-  
+
   isDesktop: boolean;
   searchActive = false;
-  
+
   ngOnInit(): void {
     this.onResize();
   }
-  
+
   @HostListener('window:resize')
   onResize() {
     this.isDesktop = window.innerWidth > 863;
   }
-  
+
+  changeLang() {
+    this.translocoService.setActiveLang(this.lang);
+  }
+
 }

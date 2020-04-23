@@ -13,12 +13,13 @@ export function pointToUrl(latlng: PinPoint, separator = ','): string {
 }
 
 export function urlToPoint(url: string, separator = ','): PinPoint | undefined {
-    if(url) {
-      const pointParts = url.split(separator);
-      if(pointParts.length === 2) {
-        return {lat: parseFloat(pointParts[0]), lng: parseFloat(pointParts[1])}
-      }
+  if(url) {
+    const pointParts = url.split(separator);
+    if(pointParts.length === 2) {
+      return {lat: parseFloat(pointParts[0]), lng: parseFloat(pointParts[1])}
     }
+  }
+  return undefined;
 }
 
 export function toDMS(value: number, precision = 0): string {
