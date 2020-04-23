@@ -13,6 +13,7 @@ import { BrowserModule, Meta } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import {MatSnackBarModule} from '@angular/material/snack-bar';
 
 import { NgxsModule } from '@ngxs/store';
 import { FileSizeModule } from 'ngx-filesize';
@@ -31,15 +32,20 @@ import { PinState } from './state/pin.state';
 import { environment } from '../environments/environment';
 import { PinApiService } from './services/pin-api.service';
 import { ShareDialogComponent } from './components/share-dialog.component';
+import { AppRoutingModule } from './app-routing.module';
+import { PinDetailComponent } from './components/pin-detail.component';
+import { MapWrapperComponent } from './components/map-wrapper.component';
 
 
 @NgModule({
   declarations: [
     AppComponent,
+    PinDetailComponent,
     HeaderComponent,
     ImageComponent,
     ImageInputComponent,
     MapComponent,
+    MapWrapperComponent,
     PinMarkerComponent,
     SearchComponent,
     SidebarComponent,
@@ -61,7 +67,9 @@ import { ShareDialogComponent } from './components/share-dialog.component';
     MatInputModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
+    MatSnackBarModule,
     MatTooltipModule,
+    AppRoutingModule,
     NgxsModule.forRoot([PinState], {
       developmentMode: !environment.production
     })

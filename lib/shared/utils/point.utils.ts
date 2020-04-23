@@ -12,9 +12,18 @@ export function pointToUrl(latlng: PinPoint, separator = ','): string {
     .join(separator);
 }
 
+export function urlToPoint(url: string, separator = ','): PinPoint | undefined {
+    if(url) {
+      const pointParts = url.split(separator);
+      if(pointParts.length === 2) {
+        return {lat: parseFloat(pointParts[0]), lng: parseFloat(pointParts[1])}
+      }
+    }
+}
+
 export function toDMS(value: number, precision = 0): string {
   let power, degrees, minutes, seconds, rest, result = [];
-  
+
   if (value < 0) {
     result.push('-');
     value = Math.abs(value);
@@ -27,7 +36,7 @@ export function toDMS(value: number, precision = 0): string {
   seconds = precision ? Math.floor(value) : Math.round(value);
   value = (value - seconds) * power;
   rest = precision ? Math.round(value) : 0;
-  
+
   // rounding corrections
   seconds += int(rest / power);
   rest = rest % power;
@@ -35,7 +44,7 @@ export function toDMS(value: number, precision = 0): string {
   seconds = seconds % 60;
   degrees += int(minutes / 60);
   minutes = minutes % 60;
-  
+
   result.push(zeroPadding(degrees, 2), '°');
   result.push(zeroPadding(minutes, 2), '\'');
   result.push(zeroPadding(seconds, 2));

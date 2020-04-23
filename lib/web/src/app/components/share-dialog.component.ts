@@ -1,6 +1,7 @@
 import { Component, Inject } from "@angular/core";
 import { MAT_DIALOG_DATA } from "@angular/material/dialog";
 import { PinPoint } from 'shared/types/pin.types';
+import { pointToUrl } from 'shared/utils/point.utils';
 
 @Component({
   styles: [``],
@@ -16,7 +17,7 @@ export class ShareDialogComponent {
   }
 
   getPointUrl(): string {
-    return `${window.location.origin}?p=${this.data.lat},${this.data.lng}`;
+    return `${window.location.origin}?p=${pointToUrl(this.data)}`;
   }
 
   copyUrl(): void {
