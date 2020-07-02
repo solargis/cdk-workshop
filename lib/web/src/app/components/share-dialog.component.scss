@@ -1,0 +1,12 @@
+pre.share {
+  background-color: #e0dfdf;
+  padding: 10px;
+  border-radius: 12px;
+}
+
+div.share {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  cursor: pointer;
+}
