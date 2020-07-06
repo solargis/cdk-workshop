@@ -49,9 +49,7 @@ export class GeocodePinPoint {
 
 export class SidebarInfo {
   static readonly type = '[pin] sidebar info'
-  constructor (public justInfo) {
-    this.justInfo = false
-  }
+  constructor (public sidebarInfo) {}
 }
 
 // State model
@@ -83,8 +81,8 @@ export class PinState implements NgxsOnInit {
     return state.selectedPin
   }
 
-  @Selector() static sidebarInfo (state: SidebarInfo) {
-    return state.justInfo
+  @Selector() static sidebarInfo (state: PinStateModel) {
+    return state.sidebarInfo
   }
 
   constructor (

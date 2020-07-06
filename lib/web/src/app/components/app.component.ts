@@ -63,5 +63,7 @@ import { Pin } from 'shared/types/pin.types'
   `
 })
 export class AppComponent {
+  constructor () {}
+
   @Select(PinState.selectedPin) selectedPin$: Observable<Pin>
 }

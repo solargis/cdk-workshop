@@ -1,4 +1,11 @@
-import { LambdaIntegration, RestApi } from '@aws-cdk/aws-apigateway'
+import {
+  LambdaIntegration,
+  RestApi,
+  CfnIntegrationV2,
+  CfnRouteV2,
+  CfnApiV2
+} from '@aws-cdk/aws-apigateway'
+// import * as gw from '@aws-cdk/aws-apigatewayv2'
 import {
   CloudFrontWebDistribution,
   CloudFrontWebDistributionProps,
@@ -18,13 +25,29 @@ import {
   Table,
   StreamViewType
 } from '@aws-cdk/aws-dynamodb'
-import { Code, Function, LayerVersion, Runtime } from '@aws-cdk/aws-lambda'
+import {
+  Code,
+  Function,
+  LayerVersion,
+  Runtime,
+  StartingPosition
+  // EventSourceMapping
+} from '@aws-cdk/aws-lambda'
 import { Bucket, EventType } from '@aws-cdk/aws-s3'
 import { BucketDeployment, Source } from '@aws-cdk/aws-s3-deployment'
 import { LambdaDestination } from '@aws-cdk/aws-s3-notifications'
 import { path as rootPath } from 'app-root-path'
 import { resolve } from 'path'
 import { Topic } from '@aws-cdk/aws-sns'
+// import * as subs from '@aws-cdk/aws-sns-subscriptions'
+// import { DynamoEventSource } from '@aws-cdk/aws-lambda-event-sources'
+
+import {
+  PolicyStatement,
+  Effect,
+  Role,
+  ServicePrincipal
+} from '@aws-cdk/aws-iam'
 
 import { addCorsOptions } from './cors.utils'
 import { WebIndex } from './web-index'
@@ -39,9 +62,10 @@ export class CdkWorkshopStack extends Stack {
 
     // API
 
-    // const topic = new Topic(this, 'Topic', {
-    //   displayName: 'Pin topic'
-    // })
+    const topic = new Topic(this, 'Topic', {
+      displayName: 'Pin topic',
+      topicName: 'PinTopic'
+    })
 
     const imageBucket = new Bucket(this, 'ImageBucket')
 
@@ -55,7 +79,8 @@ export class CdkWorkshopStack extends Stack {
       billingMode: BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.DESTROY
     })
-    pinTable.tableStreamArn
+
+    // topic.addSubscription( new subs.)
 
     const apiCode = Code.fromAsset('dist/api')
 
@@ -71,10 +96,40 @@ export class CdkWorkshopStack extends Stack {
       handler: 'pin-lambda.handler',
       environment: {
         IMAGE_BUCKET: imageBucket.bucketName,
-        PIN_TABLE: pinTable.tableName
+        PIN_TABLE: pinTable.tableName,
+        PIN_TOPIC: topic.topicArn ?? 'notopic'
       }
     })
-    // pinHandler.addEventSource(new SnsEventSource(topic))
+
+    const pinSocketFunction = new Function(this, 'PinSocket', {
+      code: apiCode,
+      runtime: Runtime.NODEJS_12_X,
+      handler: 'pin-socket-lambda.handler',
+      environment: {
+        PIN_STREAM: pinTable.tableName,
+        PIN_TOPIC: topic.topicArn
+      }
+    })
+
+    pinTable.grantStream(pinSocketFunction)
+    // pinSocketFunction.addEventSource(
+    //   new DynamoEventSource(pinTableStream, {
+    //     startingPosition: StartingPosition.LATEST,
+    //     batchSize: 10
+    //   })
+    // )
+
+    pinSocketFunction.addEventSourceMapping('PinStream', {
+      eventSourceArn: pinTable.tableStreamArn as string,
+      startingPosition: StartingPosition.LATEST
+    })
+
+    // new EventSourceMapping(this, 'PinStream', {
+    //   eventSourceArn: pinTableStream.tableStreamArn,
+    //   target: pinSocketFunction,
+    //   startingPosition: StartingPosition.LATEST
+    // })
+
     imageBucket.grantReadWrite(pinHandler)
     pinTable.grantReadWriteData(pinHandler)
 
@@ -113,6 +168,41 @@ export class CdkWorkshopStack extends Stack {
     helloApi.addMethod('GET', new LambdaIntegration(helloHandler))
 
     const pinApi = api.root.addResource('pin')
+
+    const wsApiGw = new CfnApiV2(this, 'pinSocketGw', {
+      name: 'pinSocketGw',
+      protocolType: 'WEBSOCKET',
+      routeSelectionExpression: '$request.body.message'
+    })
+    const apiId = wsApiGw.ref
+
+    const policy = new PolicyStatement({
+      effect: Effect.ALLOW,
+      resources: [pinHandler.functionArn],
+      actions: ['lambda:InvokeFunction']
+    })
+
+    const wsRole = new Role(this, 'socketGwRole', {
+      assumedBy: new ServicePrincipal('apigateway.amazonaws.com')
+    })
+
+    wsRole.addToPolicy(policy)
+
+    const wsConnectIntegreation = new CfnIntegrationV2(
+      this,
+      'wsConnectIntegreation',
+      {
+        apiId,
+        integrationType: 'AWS_PROXY',
+        integrationUri: `arn:aws:apigateway:${process.env.AWS_REGION}:lambda:path/2015-03-31/functions/${pinHandler.functionArn}/invocations`,
+        credentialsArn: wsRole.roleArn
+      }
+    )
+    const wsConnect = new CfnRouteV2(this, 'pinSocketConnect', {
+      apiId,
+      routeKey: '$connect',
+      target: `integrations${wsConnectIntegreation.ref}`
+    })
 
     // OPTIONS /pin
     addCorsOptions(pinApi)

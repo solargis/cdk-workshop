@@ -49,7 +49,7 @@ import { FormGroup, FormControl } from '@angular/forms'
           mat-icon-button
           (click)="unselectPin()"
         >
-          <mat-icon>close</mat-icon>
+          <mat-icon>{{ 'CLOSE' | translate }}</mat-icon>
         </button>
       </mat-card-title>
       <mat-card-subtitle>
@@ -58,7 +58,9 @@ import { FormGroup, FormControl } from '@angular/forms'
       <mat-card-content>
         <form [formGroup]="pinName" class="form" (ngSubmit)="rename()">
           <mat-form-field class="">
-            <mat-label>Custom name</mat-label>
+            <mat-label i18n="@@pinNameInputLabel">{{
+              'PIN_NAME_LABEL' | translate
+            }}</mat-label>
             <input
               formControlName="name"
               matInput
@@ -70,15 +72,15 @@ import { FormGroup, FormControl } from '@angular/forms'
             *ngIf="!unsavedImage && pin.pointUrl && !(info$ | async)"
             color="primary"
           >
-            Change name
+            {{ 'PIN_CHANGE_NAME' | translate }}
           </button>
         </form>
       </mat-card-content>
       <mat-card-content *ngIf="info$ | async">
-        <p>Created: {{ pin.created | date }}</p>
-        <h4>Image</h4>
-        <p>Name: {{ pin.image?.name }}</p>
-        <p>Size: {{ pin.image?.size | filesize }}</p>
+        <p>{{ 'CREATED' | translate }}: {{ pin.created | date }}</p>
+        <h4>{{ 'IMAGE' | translate }}</h4>
+        <p>{{ 'NAME' | translate }}: {{ pin.image?.name }}</p>
+        <p>{{ 'SIZE' | translate }}: {{ pin.image?.size | filesize }}</p>
       </mat-card-content>
       <div style="display:flex">
         <button
@@ -87,7 +89,7 @@ import { FormGroup, FormControl } from '@angular/forms'
           color="primary"
           (click)="selectImage()"
         >
-          Pin Image
+          {{ 'PIN_IMAGE' | translate }}
         </button>
         <mat-progress-bar
           *ngIf="unsavedImage"
@@ -101,7 +103,7 @@ import { FormGroup, FormControl } from '@angular/forms'
           [href]="pin.image.url"
           target="_blank"
         >
-          Download Image
+          {{ 'DOWNLOAD_IMAGE' | translate }}
         </a>
         <button
           mat-button
@@ -109,7 +111,7 @@ import { FormGroup, FormControl } from '@angular/forms'
           color="warn"
           (click)="deletePin()"
         >
-          Delete Pin
+          {{ 'DELETE_PIN' | translate }}
         </button>
         <button
           mat-button
@@ -117,7 +119,7 @@ import { FormGroup, FormControl } from '@angular/forms'
           color="primary"
           (click)="share()"
         >
-          Share
+          {{ 'SHARE' | translate }}
         </button>
       </div>
 

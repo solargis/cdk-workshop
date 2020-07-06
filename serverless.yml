@@ -57,7 +57,11 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-
+    pinTopicLocal:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: PinTopic
+        DisplayName: 'Pin topic'
 functions:
   hello:
     handler: 'dist/api/hello-lambda.handler'
@@ -87,3 +91,10 @@ functions:
           event: s3:ObjectCreated:*
           rules:
             - prefix: original
+  pin-socket:
+    handler: 'dist/pin-socket.handler'
+    events:
+      - stream:
+        type: dynamodb
+        arn:
+          Fn::GetAtt: [pinTableLocal, StreamArn]

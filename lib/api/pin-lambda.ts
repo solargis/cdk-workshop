@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, Context } from 'aws-lambda'
-import { DynamoDB } from 'aws-sdk'
+import { DynamoDB, SNS } from 'aws-sdk'
 import { parse } from 'path'
 import { v4 } from 'uuid'
 
@@ -17,6 +17,8 @@ const dynamo = new DynamoDB.DocumentClient({
   endpoint: process.env.DYNAMODB_ENDPOINT
 })
 
+const sns = new SNS({ apiVersion: '2010-03-31' })
+
 export async function handler (event: APIGatewayProxyEvent, context: Context) {
   context.callbackWaitsForEmptyEventLoop = false
 
@@ -25,6 +27,7 @@ export async function handler (event: APIGatewayProxyEvent, context: Context) {
   const sourceIp = context.identity && (context.identity as any).sourceIp
 
   console.log(`pin API: ${httpMethod}:${event.path}`, pointUrl)
+  console.log('debug', process.env)
 
   if (httpMethod === 'POST' && !pointUrl) {
     return await handleSave(event, sourceIp)
@@ -79,6 +82,14 @@ async function handleSave (event: APIGatewayProxyEvent, sourceIp: string) {
   await dynamo.put({ TableName: pinTable, Item: savedPin }).promise()
 
   const savedPinWithUrl = resolveSignedUrl(savedPin)
+  console.log('topiccArn: ', process.env.PIN_TOPIC)
+  sns.publish(
+    {
+      TopicArn: process.env.PIN_TOPIC,
+      Message: JSON.stringify(savedPinWithUrl)
+    },
+    console.log
+  )
   return transformResult({ body: savedPinWithUrl })
 }
 
