@@ -1,28 +1,22 @@
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core'
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 
-import { Image, SavedImage } from 'shared/types/pin.types'
+import { Image, SavedImage } from 'shared/types/pin.types';
 
 @Component({
   selector: 'app-image',
-  styles: [
-    `
-      .bottom {
+  styles: [`
+    .bottom {
         display: flex;
         justify-content: space-between;
         padding-top: 8px;
-      }
-      img {
+    }
+    img {
         max-width: 100%;
         height: auto;
-      }
-    `
-  ],
+    }
+  `],
   template: `
-    <mat-progress-bar
-      *ngIf="image && loading"
-      mode="query"
-      color="primary"
-    ></mat-progress-bar>
+    <mat-progress-bar *ngIf="image && loading" mode="query" color="primary"></mat-progress-bar>
     <ng-container *ngIf="image">
       <div *ngIf="image.url || image.dataUrl">
         <img
@@ -39,15 +33,15 @@ import { Image, SavedImage } from 'shared/types/pin.types'
   `
 })
 export class ImageComponent implements OnChanges {
-  @Input() image: Partial<SavedImage>
+  @Input() image: Partial<SavedImage>;
 
   @Input() diplayBottom: boolean = true
 
-  loading = true
+  loading = true;
 
-  ngOnChanges (changes: SimpleChanges): void {
+  ngOnChanges(changes: SimpleChanges): void {
     if (changes.image && this.image) {
-      this.loading = true
+      this.loading = true;
     }
   }
 }
