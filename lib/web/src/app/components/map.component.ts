@@ -30,11 +30,11 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
 
   map: L.Map;
   selectedPinMarker: L.Marker;
-  savedPinMarkers: { [pointUrl: string]: L.Marker } = {};
+  savedPinMarkers: {[pointUrl: string]: L.Marker} = {};
 
   private subscriptions = [] as Subscription[];
 
-  constructor (
+  constructor(
     private injector: Injector,
     private resolver: ComponentFactoryResolver,
     private appRef: ApplicationRef,
@@ -46,7 +46,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     L.Icon.Default.imagePath = 'assets/leaflet/';
   }
 
-  ngOnInit (): void {
+  ngOnInit(): void {
     const initialCenter = [48, 17];
 
     this.map = L.map(this.el.nativeElement, {
@@ -58,7 +58,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
       zoom: 4,
       layers: [
         new L.TileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: 'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
+          'attribution': 'Map data © <a href="http://openstreetmap.org">OpenStreetMap</a> contributors'
         })
       ]
     });
@@ -111,8 +111,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     );
 
     // zoom to pins
-    this.pins$
-      .pipe(
+    this.pins$.pipe(
         filter(pins => pins && !!pins.length),
         first()
       ).subscribe(pins => {
@@ -201,7 +200,7 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
 
     this.appRef.attachView(pinMarkerIcon.hostView);
     pinMarkerIcon.instance.onDestroyCallback = () => {
-      this.appRef.detachView(pinMarkerIcon.hostView)
+      this.appRef.detachView(pinMarkerIcon.hostView);
     };
     return pinMarkerIcon;
   }

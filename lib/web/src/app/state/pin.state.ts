@@ -18,7 +18,7 @@ export class PinFromSearch {
 }
 
 export class UnselectPin {
-  static readonly type = '[pin] unselect';
+  static readonly type = '[pin] unselect'
 }
 
 export class SavePin {
@@ -80,12 +80,14 @@ export class PinState implements NgxsOnInit {
   ) {}
 
   ngxsOnInit(ctx?: StateContext<PinStateModel>): void | any {
-    this.pinApi.listPins().subscribe(pins => ctx.patchState({ pins }))
+    this.pinApi.listPins().subscribe(
+      pins => ctx.patchState({ pins })
+    );
   }
 
   @Action(PinFromMap)
   pinFromMap(ctx: StateContext<PinStateModel>, { point }: PinFromMap) {
-    const savedPin = this.findSavedPin(ctx, point)
+    const savedPin = this.findSavedPin(ctx, point);
     if (savedPin) {
       ctx.patchState({ selectedPin: savedPin });
     } else {
@@ -106,12 +108,12 @@ export class PinState implements NgxsOnInit {
   }
 
   @Action(UnselectPin)
-  unselectPin (ctx: StateContext<PinStateModel>) {
+  unselectPin(ctx: StateContext<PinStateModel>) {
     ctx.patchState({ selectedPin: undefined });
   }
 
   @Action(SavePin)
-  savePin (ctx: StateContext<PinStateModel>, { unsavedImage, customName }: SavePin) {
+  savePin(ctx: StateContext<PinStateModel>, { unsavedImage, customName }: SavePin) {
     const { selectedPin } = ctx.getState();
     // is unsaved pin
     if (!(selectedPin as SavedPin).pointUrl) {
@@ -120,8 +122,8 @@ export class PinState implements NgxsOnInit {
           const { pins } = ctx.getState();
           ctx.patchState({
             pins: [...pins, savedPin],
-            selectedPin: savedPin
-          });
+            selectedPin: savedPin }
+          );
         });
     }
   }

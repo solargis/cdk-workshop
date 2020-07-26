@@ -39,7 +39,7 @@ import { FormGroup, FormControl } from '@angular/forms';
       <mat-card-content>
         <form [formGroup]="pinName" class="form" (ngSubmit)="rename()">
           <mat-form-field class="">
-            <mat-label i18n="@@pinNameInputLabel">{{ 'PIN_NAME_LABEL' | translate }}</mat-label>
+            <mat-label>{{ 'PIN_NAME_LABEL' | translate }}</mat-label>
             <input formControlName="name" matInput placeholder="{{ pin.address?.address?.city }}"/>
           </mat-form-field>
           <button mat-raised-button *ngIf="!unsavedImage && pin.pointUrl && !(info$ | async)" color="primary">
@@ -146,13 +146,6 @@ export class SidebarComponent implements OnChanges {
 
   getPinName (): string {
     let name = '';
-    // if (
-    //   this.pin.address &&
-    //   this.pin.address.address &&
-    //   this.pin.address.address.city
-    // ) {
-    //   name = this.pin.address.address.city
-    // }
 
     name = !!this.pin.customName ? this.pin.customName : name;
     return name;

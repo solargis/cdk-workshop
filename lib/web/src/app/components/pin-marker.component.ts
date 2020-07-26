@@ -28,7 +28,7 @@ export class PinMarkerComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('marker', { static: true })
   public marker: ElementRef;
 
-  constructor (
+  constructor(
     private elm: ElementRef,
     private store: Store,
     private pinApi: PinApiService,
@@ -63,7 +63,7 @@ export class PinMarkerComponent implements OnInit, OnDestroy, AfterViewInit {
       })
     );
     this.subscription = thumbnail$.subscribe(
-      thumbnail => (this.thumbnail = thumbnail)
+      thumbnail => this.thumbnail = thumbnail
     );
   }
 

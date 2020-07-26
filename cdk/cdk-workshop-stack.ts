@@ -212,20 +212,20 @@ export class CdkWorkshopStack extends Stack {
     const cloudFrontProps: CloudFrontWebDistributionProps = {
       priceClass: PriceClass.PRICE_CLASS_100,
       originConfigs: [{
-          s3OriginSource: { s3BucketSource: webBucket },
-          behaviors: [
-            {
-              pathPattern: 'index.html',
-              defaultTtl: Duration.seconds(0),
-              maxTtl: Duration.seconds(0),
-              minTtl: Duration.seconds(0)
-            },
-            { isDefaultBehavior: true }
-          ]
-        }]
+        s3OriginSource: { s3BucketSource: webBucket },
+        behaviors: [
+          {
+            pathPattern: 'index.html',
+            defaultTtl: Duration.seconds(0),
+            maxTtl: Duration.seconds(0),
+            minTtl: Duration.seconds(0)
+          },
+          { isDefaultBehavior: true }
+        ]
+      }]
     };
 
-    const cloudFront = new CloudFrontWebDistribution( this, 'WebDistribution', cloudFrontProps);
+    const cloudFront = new CloudFrontWebDistribution(this, 'WebDistribution', cloudFrontProps);
 
     new CfnOutput(this, 'WebDistributionDomainName', { value: cloudFront.domainName });
   }

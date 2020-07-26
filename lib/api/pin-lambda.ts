@@ -18,9 +18,9 @@ const sns = new SNS({ apiVersion: '2010-03-31' });
 export async function handler(event: APIGatewayProxyEvent, context: Context) {
   context.callbackWaitsForEmptyEventLoop = false
 
-  const httpMethod = event.httpMethod.toUpperCase()
-  const pointUrl = event.pathParameters && event.pathParameters.pointUrl
-  const sourceIp = context.identity && (context.identity as any).sourceIp
+  const httpMethod = event.httpMethod.toUpperCase();
+  const pointUrl = event.pathParameters && event.pathParameters.pointUrl;
+  const sourceIp = context.identity && (context.identity as any).sourceIp;
 
   console.log(`pin API: ${httpMethod}:${event.path}`, pointUrl);
 
@@ -47,7 +47,7 @@ async function handleSave(event: APIGatewayProxyEvent, sourceIp: string) {
 
   const existingPinRecord = await getPinRecord(pointUrl);
   if (existingPinRecord) {
-    return transformResult({ statusCode: 400, body: { error: 'pin already exists' } })
+    return transformResult({ statusCode: 400, body: { error: 'pin already exists' }})
   }
 
   const created = Date.now();
@@ -97,7 +97,7 @@ async function handleRename(event: APIGatewayProxyEvent, pointUrl: string) {
 }
 
 // GET:/pin
-async function handleList () {
+async function handleList() {
   const result = await dynamo.scan({ TableName: pinTable }).promise();
   const pinRecords = result.Items as SavedPin[];
   return transformResult({ body: pinRecords.map(pin => resolveSignedUrl(pin)) });
@@ -120,15 +120,16 @@ async function handleDelete(pointUrl: string) {
   await deleteImageFromS3(pinRecord);
 
   console.log('Deleting pin record: ', pointUrl);
-  await dynamo.delete({ TableName: pinTable, Key: { pointUrl } }).promise();
+  await dynamo.delete({ TableName: pinTable, Key: { pointUrl } })
+    .promise();
 
   return transformResult({ statusCode: 204 });
 }
 
 // helper functions
 
-function transformResult({ statusCode = 200, body = '' }: { statusCode?: number; body?: any } = {}) {
-  console.log('pin API result', statusCode, body)
+function transformResult({ statusCode = 200, body = ''}: { statusCode?: number, body?: any } = {}) {
+  console.log('pin API result', statusCode, body);
   return {
     statusCode,
     headers: { "Access-Control-Allow-Origin": "*" },
@@ -137,6 +138,6 @@ function transformResult({ statusCode = 200, body = '' }: { statusCode?: number;
 }
 
 async function getPinRecord(pointUrl: string): Promise<SavedPin> {
-  const result = await dynamo.get({ TableName: pinTable, Key: { pointUrl } }).promise()
+  const result = await dynamo.get({ TableName: pinTable, Key: { pointUrl } }).promise();
   return result && result.Item as SavedPin;
 }
