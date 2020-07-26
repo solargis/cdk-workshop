@@ -1,0 +1,7 @@
+<h1 mat-dialog-title>Share url</h1>
+<i>Click the link to copy</i>
+<div mat-dialog-content>
+  <div class="share">
+    <pre (click)="copyToClipboard()" class="share">{{shareUrl}}</pre>
+  </div>
+</div>

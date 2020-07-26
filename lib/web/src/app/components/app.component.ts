@@ -37,20 +37,19 @@ import { Pin } from 'shared/types/pin.types';
       }
   `],
   template: `
-      <div class="header">
-          <app-header [pin]="selectedPin$ | async"></app-header>
+    <div class="header">
+      <app-header [pin]="selectedPin$ | async"></app-header>
+    </div>
+    <div class="main">
+      <div class="fixed">
+        <router-outlet></router-outlet>
       </div>
-      <div class="main">
-          <div class="fixed">
-              <div map [pin]="selectedPin$ | async"></div>
-          </div>
-          <div class="sidebar" *ngIf="selectedPin$ | async">
-              <app-sidebar [pin]="selectedPin$ | async"></app-sidebar>
-          </div>
-      </div>`
+      <div class="sidebar" *ngIf="selectedPin$ | async">
+        <app-sidebar [pin]="selectedPin$ | async"></app-sidebar>
+      </div>
+    </div>`
 })
 export class AppComponent {
-  
+
   @Select(PinState.selectedPin) selectedPin$: Observable<Pin>;
-  
 }

@@ -1,0 +1,16 @@
+{
+  "SEARCH_PLACEHOLDER": "Kliknite do mapy, alebo hľadajte tu",
+  "NAME": "Meno",
+  "SIZE": "Veľkosť",
+  "CREATED": "Vztvorené",
+  "IMAGE": "Obrázok",
+  "SHARE": "Zdielať",
+  "DELETE_PIN": "Zmazať",
+  "DOWNLOAD_IMAGE": "Stiahnuť",
+  "PIN_IMAGE": "Pripnúť obrázok",
+  "CLOSE": "zavrieť",
+  "PIN_NAME_LABEL": "Meno",
+  "PIN_CHANGE_NAME": "Zmeniť meno",
+  "LANGUAGE": "Jazyk",
+  "SEARCH": "vyhľadať"
+}

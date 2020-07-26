@@ -6,6 +6,7 @@ export type PinPoint = {
 }
 
 export interface Pin {
+  customName: string;
   point: PinPoint;
   address?: NominatimResponse;
   unsavedImage?: Image;

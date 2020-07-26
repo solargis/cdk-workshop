@@ -4,8 +4,8 @@ import { ElementRef, OnChanges, OnInit, SimpleChanges, ViewEncapsulation } from 
 import { Select, Store } from '@ngxs/store';
 import * as L from 'leaflet';
 import * as isEqual from 'lodash.isequal';
-import { Observable, Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, first, map, withLatestFrom } from 'rxjs/operators';
+import { Observable, Subscription, of } from 'rxjs';
+import { distinctUntilChanged, filter, first, map, withLatestFrom, catchError, switchMap } from 'rxjs/operators';
 
 import { PinMarkerComponent } from './pin-marker.component';
 import { PinFromMap, PinState } from '../state/pin.state';
@@ -13,6 +13,8 @@ import { diffArrays } from '../utils/array.utils';
 import { CustomIcon } from '../utils/leaflet.utils';
 import { simpleChange } from '../utils/simple-change.operator';
 import { PinPoint, Pin, SavedPin } from 'shared/types/pin.types';
+import { ActivatedRoute } from '@angular/router';
+import { PinApiService } from '../services/pin-api.service';
 
 @Component({
   selector: 'div[map]', // tslint:disable-line
@@ -21,10 +23,10 @@ import { PinPoint, Pin, SavedPin } from 'shared/types/pin.types';
   template: ''
 })
 export class MapComponent implements OnInit, OnChanges, OnDestroy {
-
   @Input() pin: Pin;
 
   @Select(PinState.pins) pins$: Observable<SavedPin[]>;
+  @Select(PinState.selectedPin) selectedPin$: Observable<Pin>;
 
   map: L.Map;
   selectedPinMarker: L.Marker;
@@ -37,7 +39,9 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     private resolver: ComponentFactoryResolver,
     private appRef: ApplicationRef,
     private el: ElementRef,
-    private store: Store
+    private store: Store,
+    private route: ActivatedRoute,
+    private pinApi: PinApiService
   ) {
     L.Icon.Default.imagePath = 'assets/leaflet/';
   }
@@ -58,6 +62,23 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
         })
       ]
     });
+
+    this.route.queryParams
+      .pipe(
+        first(),
+        filter(params => !!params.pointUrl),
+        map(p => p.pointUrl as string),
+        switchMap(pointUrl =>
+          this.pinApi.getPin(pointUrl).pipe(
+            map(() => pointUrl),
+            catchError(e => of(pointUrl))
+          )
+        )
+      )
+      .subscribe(pointUrl => {
+        const [lat, lng] = pointUrl.split(',').map(n => parseFloat(n))
+        this.store.dispatch(new PinFromMap({ lat, lng }))
+      })
 
     this.subscriptions.push(
       this.pins$
@@ -91,14 +112,36 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
 
     // zoom to pins
     this.pins$.pipe(
-      filter(pins => pins && !!pins.length),
-      first()
-    ).subscribe(pins => {
-      const points = pins.map(pin => pin.point);
-      this.map.fitBounds(L.latLngBounds(points), { padding: [60, 60], maxZoom: 14 });
-    });
+        filter(pins => pins && !!pins.length),
+        first()
+      ).subscribe(pins => {
+        const points = pins.map(pin => pin.point);
+        this.map.fitBounds(L.latLngBounds(points), { padding: [60, 60], maxZoom: 14 });
+      });
 
     this.selectedPinMarker = L.marker(initialCenter);
+
+    this.subscriptions.push(
+      this.selectedPin$.subscribe(pin => {
+        this.pin = pin
+        if (this.map) {
+          if (this.pin && !(this.pin as SavedPin).pointUrl) {
+            // add unsaved pin marker
+            this.selectedPinMarker.setLatLng(this.pin.point)
+            if (!this.map.hasLayer(this.selectedPinMarker)) {
+              this.selectedPinMarker.addTo(this.map)
+            }
+          } else {
+            // remove unsaved pin marker
+            this.selectedPinMarker.removeFrom(this.map)
+          }
+          if (this.pin) {
+            this.ensurePointInView(this.pin.point)
+          }
+          setTimeout(() => this.map.invalidateSize({ pan: false }))
+        }
+      })
+    )
 
     L.control.scale().addTo(this.map);
 
@@ -161,6 +204,4 @@ export class MapComponent implements OnInit, OnChanges, OnDestroy {
     };
     return pinMarkerIcon;
   }
-
-
 }

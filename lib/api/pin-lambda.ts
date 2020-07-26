@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, Context } from 'aws-lambda';
-import { DynamoDB } from 'aws-sdk';
+import { DynamoDB, SNS } from 'aws-sdk';
 import { parse } from 'path';
 import { v4 } from 'uuid';
 
@@ -13,8 +13,10 @@ const dynamo = new DynamoDB.DocumentClient({
   endpoint: process.env.DYNAMODB_ENDPOINT
 });
 
+const sns = new SNS({ apiVersion: '2010-03-31' });
+
 export async function handler(event: APIGatewayProxyEvent, context: Context) {
-  context.callbackWaitsForEmptyEventLoop = false;
+  context.callbackWaitsForEmptyEventLoop = false
 
   const httpMethod = event.httpMethod.toUpperCase();
   const pointUrl = event.pathParameters && event.pathParameters.pointUrl;
@@ -24,16 +26,14 @@ export async function handler(event: APIGatewayProxyEvent, context: Context) {
 
   if (httpMethod === 'POST' && !pointUrl) {
     return await handleSave(event, sourceIp);
-
+  } else if (httpMethod === 'PATCH' && pointUrl) {
+    return await handleRename(event, pointUrl);
   } else if (httpMethod === 'GET' && !pointUrl) {
     return await handleList();
-
   } else if (httpMethod === 'GET' && pointUrl) {
     return await handleGet(pointUrl);
-
   } else if (httpMethod === 'DELETE' && pointUrl) {
     return await handleDelete(pointUrl);
-
   } else {
     return transformResult({ statusCode: 404, body: { error: 'method/path not supported'} });
   }
@@ -64,7 +64,36 @@ async function handleSave(event: APIGatewayProxyEvent, sourceIp: string) {
   await dynamo.put({ TableName: pinTable, Item: savedPin }).promise();
 
   const savedPinWithUrl = resolveSignedUrl(savedPin);
+  console.log('topiccArn: ', process.env.PIN_TOPIC);
+  sns.publish(
+    {
+      TopicArn: process.env.PIN_TOPIC,
+      Message: JSON.stringify(savedPinWithUrl)
+    },
+    console.log
+  )
   return transformResult({ body: savedPinWithUrl });
+}
+
+async function handleRename(event: APIGatewayProxyEvent, pointUrl: string) {
+  const { customName } = JSON.parse(event.body as string) as Partial<Pin>
+
+  const params: DynamoDB.DocumentClient.UpdateItemInput = {
+    TableName: pinTable,
+    Key: { pointUrl },
+    UpdateExpression: 'set #customName = :customName',
+    ExpressionAttributeValues: {
+      ':customName': customName
+    },
+    ExpressionAttributeNames: {
+      '#customName': 'customName'
+    },
+    ReturnValues: 'ALL_NEW'
+  }
+  const resp = await dynamo.update(params).promise();
+
+  const body = resolveSignedUrl(resp.Attributes as SavedPin);
+  return transformResult({ body });
 }
 
 // GET:/pin
@@ -91,7 +120,7 @@ async function handleDelete(pointUrl: string) {
   await deleteImageFromS3(pinRecord);
 
   console.log('Deleting pin record: ', pointUrl);
-  await dynamo.delete({ TableName: pinTable, Key: { pointUrl }})
+  await dynamo.delete({ TableName: pinTable, Key: { pointUrl } })
     .promise();
 
   return transformResult({ statusCode: 204 });

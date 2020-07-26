@@ -27,7 +27,14 @@ import { NominatimService } from './services/nominatim.service';
 import { PinState } from './state/pin.state';
 import { environment } from '../environments/environment';
 import { PinApiService } from './services/pin-api.service';
-
+import { ShareDialogComponent } from './components/share-dialog.component';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatSelectModule } from '@angular/material/select';
+import { RouterModule } from '@angular/router';
+import { routes } from './routes';
+import { ImagePageComponent } from './components/image.page.component';
+import { TranslateModule, TranslateLoader } from '@ngx-translate/core';
+import { TranslationBasicLoader } from './translation-loader';
 
 @NgModule({
   declarations: [
@@ -38,7 +45,9 @@ import { PinApiService } from './services/pin-api.service';
     MapComponent,
     PinMarkerComponent,
     SearchComponent,
-    SidebarComponent
+    SidebarComponent,
+    ShareDialogComponent,
+    ImagePageComponent
   ],
   imports: [
     BrowserModule,
@@ -55,8 +64,18 @@ import { PinApiService } from './services/pin-api.service';
     MatInputModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
+    MatDialogModule,
+    MatSelectModule,
     NgxsModule.forRoot([PinState], {
       developmentMode: !environment.production
+    }),
+    RouterModule.forRoot(routes),
+    TranslateModule.forRoot({
+      defaultLanguage: 'en',
+      loader: {
+        provide: TranslateLoader,
+        useFactory: () => new TranslationBasicLoader()
+      }
     })
   ],
   providers: [
@@ -64,9 +83,9 @@ import { PinApiService } from './services/pin-api.service';
     PinApiService,
     { provide: Config, useFactory: configFactory, deps: [Meta] }
   ],
-  entryComponents: [PinMarkerComponent],
+  entryComponents: [PinMarkerComponent, ShareDialogComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule {
-
+  
 }

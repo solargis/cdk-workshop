@@ -1,0 +1,16 @@
+{
+  "SEARCH_PLACEHOLDER": "Click into the map or search here",
+  "NAME": "Name",
+  "SIZE": "Size",
+  "CREATED": "Created",
+  "IMAGE": "Image",
+  "SHARE": "Share",
+  "DELETE_PIN": "Delete Pin",
+  "DOWNLOAD_IMAGE": "Download Image",
+  "PIN_IMAGE": "Pin Image",
+  "CLOSE": "close",
+  "PIN_NAME_LABEL": "Custom name",
+  "PIN_CHANGE_NAME": "Change name",
+  "LANGUAGE": "Language",
+  "SEARCH": "search"
+}

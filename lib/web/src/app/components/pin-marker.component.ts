@@ -14,25 +14,26 @@ import { Pin, SavedImage, SavedPin } from 'shared/types/pin.types';
   templateUrl: './pin-marker.component.html'
 })
 export class PinMarkerComponent implements OnInit, OnDestroy, AfterViewInit {
-
   @Select(PinState.selectedPin) selectedPin$: Observable<Pin>;
   @Select(PinState.pins) pins$: Observable<SavedPin[]>;
 
   selected$: Observable<boolean>;
   pin$: Observable<SavedPin>;
-  
+
   thumbnail: SavedImage;
-  
+
   subscription: Subscription;
   public onDestroyCallback: () => void;
 
   @ViewChild('marker', { static: true })
   public marker: ElementRef;
 
-  constructor(private elm: ElementRef,
-              private store: Store,
-              private pinApi: PinApiService,
-              @Inject('pointUrl') private pointUrl: string) {}
+  constructor(
+    private elm: ElementRef,
+    private store: Store,
+    private pinApi: PinApiService,
+    @Inject('pointUrl') private pointUrl: string
+  ) {}
 
   ngOnInit() {
     this.selected$ = this.selectedPin$.pipe(
@@ -69,13 +70,13 @@ export class PinMarkerComponent implements OnInit, OnDestroy, AfterViewInit {
   ngAfterViewInit() {
     this.adjustMarker();
   }
-  
+
   @HostListener('click', ['$event'])
   onClick(event: MouseEvent) {
     this.store.dispatch(new PinFromMap(this.pointUrl));
     event.stopPropagation();
   }
-  
+
   ngOnDestroy() {
     if (this.subscription) {
       this.subscription.unsubscribe();
@@ -86,12 +87,11 @@ export class PinMarkerComponent implements OnInit, OnDestroy, AfterViewInit {
   private adjustMarker() {
     const arrowHeight = 8;
     const alignWidth = 32; // align in px from left corner
-    
+
     const parentElement = this.elm.nativeElement.parentElement;
     if (parentElement) {
       const height = this.marker.nativeElement.offsetHeight + arrowHeight;
       parentElement.style.margin = `-${height}px  0 0 -${alignWidth}px`;
     }
   }
-
 }
