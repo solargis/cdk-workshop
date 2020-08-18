@@ -1,4 +1,5 @@
 import { CustomResource, CustomResourceProvider } from '@aws-cdk/aws-cloudformation';
+import { Role } from '@aws-cdk/aws-iam';
 import { Code, Runtime, SingletonFunction } from '@aws-cdk/aws-lambda';
 import { IBucket } from '@aws-cdk/aws-s3';
 import { ISource } from '@aws-cdk/aws-s3-deployment';
@@ -23,7 +24,7 @@ export class WebIndex extends Construct {
     const handler = new SingletonFunction(this, 'WebIndexLambda', {
       uuid: '4c84aa14-4077-11e9-bd73-47fe778e69cb',
       code: Code.fromInline(handlerCode),
-      runtime: Runtime.NODEJS_8_10,
+      runtime: Runtime.NODEJS_10_X,
       handler: 'index.handler',
       lambdaPurpose: 'Custom::CDKWebIndex',
       timeout: Duration.seconds(30)
@@ -31,7 +32,7 @@ export class WebIndex extends Construct {
 
     props.bucket.grantReadWrite(handler);
 
-    const { zipObjectKey } = props.source.bind(this);
+    const { zipObjectKey } = props.source.bind(this, { handlerRole: handler.role as Role });
 
     new CustomResource(this, 'CustomResource', {
       provider: CustomResourceProvider.lambda(handler),
