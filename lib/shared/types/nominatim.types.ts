@@ -15,6 +15,7 @@ export interface GeocodeResponse {
   readonly category: string;
   readonly type: string;
   readonly importance: number;
+  readonly address: any;
 }
 
 export interface ReverseGeocodeResponse {
@@ -33,4 +34,5 @@ export interface ReverseGeocodeResponse {
   readonly importance: number;
   readonly addresstype: string;
   readonly name: string;
+  readonly address: any;
 }
