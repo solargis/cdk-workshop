@@ -22,7 +22,6 @@
             "main": "lib/web/src/main.ts",
             "polyfills": "lib/web/src/polyfills.ts",
             "tsConfig": "lib/web/tsconfig.app.json",
-            "aot": true,
             "assets": [
               "lib/web/src/favicon.ico",
               "lib/web/src/assets",
@@ -35,7 +34,13 @@
             "styles": [
               "lib/web/src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [],
+            "vendorChunk": true,
+            "extractLicenses": false,
+            "buildOptimizer": false,
+            "sourceMap": true,
+            "optimization": false,
+            "namedChunks": true
           },
           "configurations": {
             "production": {
@@ -61,11 +66,12 @@
                 {
                   "type": "anyComponentStyle",
                   "maximumWarning": "6kb",
-                  "maximumError": "10kb"
+                  "maximumError": "15kb"
                 }
               ]
             }
-          }
+          },
+          "defaultConfiguration": ""
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
