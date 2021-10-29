@@ -43,13 +43,13 @@ export class CdkWorkshopStack extends Stack {
 
     const helloHandler = new Function(this, 'HelloHandler', {
       code: apiCode,
-      runtime: Runtime.NODEJS_14_X,
+      runtime: Runtime.NODEJS_12_X,
       handler: 'hello-lambda.handler'
     });
 
     const pinHandler = new Function(this, 'PinHandler', {
       code: apiCode,
-      runtime: Runtime.NODEJS_14_X,
+      runtime: Runtime.NODEJS_12_X,
       handler: 'pin-lambda.handler',
       environment: {
         IMAGE_BUCKET: imageBucket.bucketName,
@@ -61,14 +61,14 @@ export class CdkWorkshopStack extends Stack {
 
     const sharpLayer = new LayerVersion(this, `SharpLayer_${props.userName}`, {
       code: Code.fromAsset('lib/layers/sharp_layer.zip'),
-      compatibleRuntimes: [Runtime.NODEJS_14_X],
+      compatibleRuntimes: [Runtime.NODEJS_12_X],
       license: 'Apache-2.0',
       description: 'Sharp image processing library v.0.29.2'
     });
 
     const thumbnailHandler = new Function(this, 'ThumbnailHandler', {
       code: apiCode,
-      runtime: Runtime.NODEJS_14_X,
+      runtime: Runtime.NODEJS_12_X,
       handler: 'thumbnail-lambda.handler',
       layers: [sharpLayer],
       memorySize: 1536,

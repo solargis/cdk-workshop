@@ -57,7 +57,7 @@ export class SidebarComponent implements OnChanges {
 
   @Input() pin: Partial<SavedPin>;
   
-  @ViewChild(ImageInputComponent, { static: false })
+  @ViewChild(ImageInputComponent)
   private imageInputComponent: ImageInputComponent;
   
   unsavedImage: Image;
