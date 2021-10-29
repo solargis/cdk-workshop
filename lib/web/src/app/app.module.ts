@@ -64,7 +64,6 @@ import { PinApiService } from './services/pin-api.service';
     PinApiService,
     { provide: Config, useFactory: configFactory, deps: [Meta] }
   ],
-  entryComponents: [PinMarkerComponent],
   bootstrap: [AppComponent]
 })
 export class AppModule {
