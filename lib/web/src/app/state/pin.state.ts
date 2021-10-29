@@ -1,8 +1,9 @@
-import { Image, Pin, PinPoint, SavedPin } from 'shared/types/pin.types';
+import { Injectable } from '@angular/core';
 import { Action, NgxsOnInit, Selector, State, StateContext, Store } from '@ngxs/store';
 
 import { NominatimService } from '../services/nominatim.service';
 import { PinApiService } from '../services/pin-api.service';
+import { Image, Pin, PinPoint, SavedPin } from 'shared/types/pin.types';
 import { pointToUrl } from 'shared/utils/point.utils';
 
 // Actions
@@ -45,32 +46,33 @@ export interface PinStateModel {
 
 // Reducers + effects
 
+@Injectable()
 @State<PinStateModel>({
   name: 'pin',
   defaults: { pins: [], selectedPin: undefined, inProgress: false }
 })
 export class PinState implements NgxsOnInit {
-  
+
   @Selector() static pins(state: PinStateModel) {
     return state.pins;
   }
-  
+
   @Selector() static selectedPin(state: PinStateModel) {
     return state.selectedPin;
   }
-  
+
   constructor(
     private store: Store,
     private nominatim: NominatimService,
     private pinApi: PinApiService
   ) {}
-  
+
   ngxsOnInit(ctx?: StateContext<PinStateModel>): void | any {
     this.pinApi.listPins().subscribe(
       pins => ctx.patchState({ pins })
     );
   }
-  
+
   @Action(PinFromMap)
   pinFromMap(ctx: StateContext<PinStateModel>, { point }: PinFromMap) {
     const savedPin = this.findSavedPin(ctx, point);
@@ -81,18 +83,18 @@ export class PinState implements NgxsOnInit {
       this.store.dispatch(new GeocodePinPoint(point));
     }
   }
-  
+
   @Action(PinFromSearch)
   pinFromSearch(ctx: StateContext<PinStateModel>, { pin }: PinFromSearch) {
     const savedPin = this.findSavedPin(ctx, pin.point);
     ctx.patchState({ selectedPin: savedPin || pin });
   }
-  
+
   @Action(UnselectPin)
   unselectPin(ctx: StateContext<PinStateModel>) {
     ctx.patchState({ selectedPin: undefined });
   }
-  
+
   @Action(SavePin)
   savePin(ctx: StateContext<PinStateModel>, { unsavedImage }: SavePin) {
     const { selectedPin } = ctx.getState();
@@ -108,7 +110,7 @@ export class PinState implements NgxsOnInit {
         });
     }
   }
-  
+
   @Action(DeletePin)
   deletePin(ctx: StateContext<PinStateModel>) {
     const { selectedPin } = ctx.getState();
@@ -124,7 +126,7 @@ export class PinState implements NgxsOnInit {
       });
     }
   }
-  
+
   @Action(GeocodePinPoint)
   geocodePinPoint(ctx: StateContext<PinStateModel>, { point }: GeocodePinPoint) {
     this.nominatim.getAddress(point).subscribe(address => {
@@ -132,11 +134,11 @@ export class PinState implements NgxsOnInit {
       ctx.patchState({ selectedPin: { ...selectedPin, address } })
     });
   }
-  
+
   private findSavedPin(ctx: StateContext<PinStateModel>, point: PinPoint | string): SavedPin | undefined {
     const pointUrl = typeof point === 'string' ? point : pointToUrl(point);
     const { pins } = ctx.getState();
     return pins.find(pin => pin.pointUrl === pointUrl);
   }
-  
+
 }

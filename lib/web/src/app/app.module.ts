@@ -12,7 +12,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { BrowserModule, Meta } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgxsModule } from '@ngxs/store';
-import { FileSizeModule } from 'ngx-filesize';
+import { NgxFilesizeModule } from 'ngx-filesize';
 
 import { AppComponent } from './components/app.component';
 import { HeaderComponent } from './components/header.component';
@@ -45,7 +45,6 @@ import { PinApiService } from './services/pin-api.service';
     BrowserAnimationsModule,
     FormsModule,
     ReactiveFormsModule,
-    FileSizeModule,
     HttpClientModule,
     MatAutocompleteModule,
     MatButtonModule,
@@ -55,6 +54,7 @@ import { PinApiService } from './services/pin-api.service';
     MatInputModule,
     MatProgressBarModule,
     MatProgressSpinnerModule,
+    NgxFilesizeModule,
     NgxsModule.forRoot([PinState], {
       developmentMode: !environment.production
     })
