@@ -10,7 +10,7 @@ plugins:
 
 provider:
   name: aws
-  runtime: nodejs10.x
+  runtime: nodejs14.x
   region: eu-west-1
   stage: local
   environment:
@@ -24,7 +24,7 @@ provider:
 
 custom:
   serverless-offline:
-    port: 4000
+    httpPort: 4000
   dynamodb:
     stages:
       - local

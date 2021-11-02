@@ -1,4 +1,4 @@
-name: Fullstack Build
+name: Build and Deploy to AWS
 
 on:
   push:
@@ -9,13 +9,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     environment: sandbox
 
     strategy:
       matrix:
         node-version: [14.x]
-    
+
     steps:
     - uses: actions/checkout@v2
 
@@ -31,7 +31,7 @@ jobs:
         key: ${{ runner.os }}-node-${{ matrix.node-version }}-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
           ${{ runner.os }}-node-${{ matrix.node-version }}-
-      
+
     - name: Build
       run: |
         npm install
@@ -44,14 +44,13 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: eu-central-1
 
-    - name: Cache CDK output
+    - name: Cache CDK outputs
       uses: actions/cache@v2
       with:
-        path: ~/cdk.out
-        key: ${{ runner.os }}-cdk-${{ matrix.node-version }}-${{ hashFiles('dist') }}
+        path: ./cdk.out
+        key: ${{ runner.os }}-cdk-${{ matrix.node-version }}-
         restore-keys: |
           ${{ runner.os }}-cdk-${{ matrix.node-version }}-
-        
+
     - name: Deploy
       run: npx cdk deploy
-      
