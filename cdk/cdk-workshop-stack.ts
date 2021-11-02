@@ -22,9 +22,9 @@ export class CdkWorkshopStack extends Stack {
 
     // Tags
     const tags = Tags.of(scope);
-    tags.add('sg:language', 'TypeScript');
-    tags.add('sg:team', 'webapps');
-    tags.add('sg:app', 'CDK workshop');
+    tags.add('language', 'TypeScript');
+    tags.add('team', 'webapps');
+    tags.add('app', 'CDK workshop');
 
     // API
 
@@ -89,7 +89,7 @@ export class CdkWorkshopStack extends Stack {
     );
 
     const api = new RestApi(this, `CdkWorkshopAPI_${props.userName}`);
-    Tags.of(api).add('sg:public', 'true')
+    Tags.of(api).add('public', 'true')
 
     const helloApi = api.root.addResource('hello');
     helloApi.addMethod('GET', new LambdaIntegration(helloHandler));
@@ -115,7 +115,7 @@ export class CdkWorkshopStack extends Stack {
     });
 
     webBucket.grantPublicAccess();
-    Tags.of(webBucket).add('sg:public', 'true');
+    Tags.of(webBucket).add('public', 'true');
 
     const webSource = Source.asset(resolve(rootPath, 'dist/web'));
 
