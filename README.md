@@ -1,5 +1,7 @@
 # CDK Fullstack Workshop
 
+[![Build](https://github.com/solargis/cdk-workshop/actions/workflows/build.yml/badge.svg?branch=latest)](https://github.com/solargis/cdk-workshop/actions/workflows/build.yml)
+
 This workshop will guide you step by step to create a fullstack javascript map application in the AWS cloud. 
 
 Cloud resources and deployment into the cloud will be fully managed by **infrastructure as code**: [AWS Cloud Development Kit](https://docs.aws.amazon.com/cdk/latest/guide/home.html)
