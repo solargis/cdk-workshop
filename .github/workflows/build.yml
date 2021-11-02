@@ -34,3 +34,25 @@ jobs:
       run: |
         npm install
         npm run build
+
+    - name: Configure AWS Credentials
+      if: matrix.node-version == '14.x'
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: eu-central-1
+
+    - name: Cache CDK output
+      if: matrix.node-version == '14.x'
+      uses: actions/cache@v2
+      with:
+        path: ~/cdk.out
+        key: ${{ runner.os }}-cdk-${{ matrix.node-version }}-${{ hashFiles('dist') }}
+        restore-keys: |
+          ${{ runner.os }}-cdk-${{ matrix.node-version }}-
+        
+    - name: Deploy
+      if: matrix.node-version == '14.x'
+      run: npx cdk deploy
+      
