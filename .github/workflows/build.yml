@@ -8,6 +8,7 @@ on:
 
 jobs:
   build:
+    name: 'Fullstack build'
     runs-on: ubuntu-latest
 
     environment: sandbox
@@ -23,7 +24,6 @@ jobs:
       uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
-#        cache: 'npm'
 
     - name: Cache NPM packages
       uses: actions/cache@v2
@@ -33,25 +33,57 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-node_modules-${{ matrix.node-version }}-
 
-    - name: Build
+    - name: Run build
       run: |
         npm install
         npm run build
 
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
+    - name: Store dist
+      uses: actions/upload-artifact@v2
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: eu-central-1
+        name: dist
+        path: dist
 
-    - name: Cache CDK outputs
-      uses: actions/cache@v2
-      with:
-        path: ./cdk.out
-        key: ${{ runner.os }}-cdk-${{ matrix.node-version }}-${{ hashFiles('**/dist', '**/cdk') }}
-        restore-keys: |
-          ${{ runner.os }}-cdk-${{ matrix.node-version }}-
+  deploy:
+    name: 'Deploy to AWS'
+    needs: build
+    runs-on: ubuntu-latest
 
-    - name: Deploy
-      run: npx cdk deploy
+    environment: sandbox
+
+    steps:
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: 14.x
+
+      - name: Cache NPM packages
+        uses: actions/cache@v2
+        with:
+          path: ./node_modules
+          key: ${{ runner.os }}-node_modules-14.x-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node_modules-14.x-
+
+      - name: Download dist
+        uses: actions/download-artifact@v2
+        with:
+          name: dist
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
+
+      - name: Cache CDK outputs
+        uses: actions/cache@v2
+        with:
+          path: ./cdk.out
+          key: ${{ runner.os }}-cdk-14.x-${{ hashFiles('**/dist', '**/cdk') }}
+          restore-keys: |
+            ${{ runner.os }}-cdk-14.x-
+
+      - name: CDK Deploy
+        run: npx cdk deploy
