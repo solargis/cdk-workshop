@@ -31,10 +31,9 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-node_modules-${{ matrix.node-version }}-
 
-    - name: Run build
-      run: |
-        npm install
-        npm run build
+    - run: npm install
+    - run: npm run api:build
+    - run: npm run web:build
 
     - name: Store dist
       uses: actions/upload-artifact@v2
