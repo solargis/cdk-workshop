@@ -3,8 +3,8 @@ name: Build and Deploy to AWS
 on:
   push:
     branches: [ latest ]
-  pull_request:
-    branches: [ latest ]
+#  pull_request:
+#    branches: [ latest ]
 
 jobs:
   build:
@@ -48,7 +48,7 @@ jobs:
       uses: actions/cache@v2
       with:
         path: ./cdk.out
-        key: ${{ runner.os }}-cdk-${{ matrix.node-version }}-${{ hashFiles('dist') }}
+        key: ${{ runner.os }}-cdk-${{ matrix.node-version }}-${{ hashFiles('**/dist', '**/cdk') }}
         restore-keys: |
           ${{ runner.os }}-cdk-${{ matrix.node-version }}-
 
