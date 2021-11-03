@@ -38,7 +38,7 @@ jobs:
     - name: Store dist
       uses: actions/upload-artifact@v2
       with:
-        name: dist
+        name: dist-${{ matrix.node-version }}
         path: dist
 
   deploy:
@@ -66,6 +66,9 @@ jobs:
 
       - name: Download dist
         uses: actions/download-artifact@v2
+        with:
+          name: dist-14.x
+          path: dist
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
