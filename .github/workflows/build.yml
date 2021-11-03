@@ -24,7 +24,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm'
-        cache-dependency-path: node_modules
+        cache-dependency-path: './node_modules'
 
 #    - name: Cache NPM packages
 #      uses: actions/cache@v2
