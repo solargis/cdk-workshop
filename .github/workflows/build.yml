@@ -87,5 +87,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cdk-14.x-
 
+      - name: DEBUG
+        run: tree -L 2
+
       - name: CDK Deploy
         run: npx cdk deploy
