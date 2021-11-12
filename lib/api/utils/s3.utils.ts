@@ -95,6 +95,7 @@ function getDownloadUrl(s3key: string, name: string) {
     ? `${localEndpoint}/${imageBucket}/${s3key}`
     : s3.getSignedUrl('getObject', {
       Bucket: imageBucket,
+      Expires: 12 * 3600,
       Key: s3key,
       ResponseContentDisposition: `attachment; filename="${name}"`
     })
