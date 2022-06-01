@@ -62,7 +62,7 @@
     "lodash.isequal": "^4.5.0",
     "ngx-filesize": "^2.0.16",
     "rxjs": "^6.4.0",
-    "sharp": "^0.29.2",
+    "sharp": "^0.30.5",
     "source-map-support": "^0.5.9",
     "tslib": "^2.0.0",
     "uuid": "^3.3.3",
