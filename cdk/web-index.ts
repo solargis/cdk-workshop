@@ -24,7 +24,7 @@ export class WebIndex extends Construct {
     const handler = new SingletonFunction(this, 'WebIndexLambda', {
       uuid: '4c84aa14-4077-11e9-bd73-47fe778e69cb',
       code: Code.fromInline(handlerCode),
-      runtime: Runtime.NODEJS_10_X,
+      runtime: Runtime.NODEJS_16_X,
       handler: 'index.handler',
       lambdaPurpose: 'Custom::CDKWebIndex',
       timeout: Duration.seconds(30)
@@ -35,7 +35,7 @@ export class WebIndex extends Construct {
     const { zipObjectKey } = props.source.bind(this, { handlerRole: handler.role as Role });
 
     new CustomResource(this, 'CustomResource', {
-      provider: CustomResourceProvider.lambda(handler),
+      provider: CustomResourceProvider.fromLambda(handler),
       resourceType: 'Custom::CDKWebIndex',
       properties: {
         ApiBaseUrl: props.apiBaseUrl,
