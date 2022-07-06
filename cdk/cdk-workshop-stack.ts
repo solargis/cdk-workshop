@@ -2,7 +2,8 @@ import { LambdaIntegration, RestApi } from '@aws-cdk/aws-apigateway';
 import { CloudFrontWebDistribution, CloudFrontWebDistributionProps, PriceClass } from '@aws-cdk/aws-cloudfront';
 import { CfnOutput, Construct, Duration, RemovalPolicy, Stack, StackProps, Tags } from '@aws-cdk/core';
 import { AttributeType, BillingMode, Table } from '@aws-cdk/aws-dynamodb';
-import { Code, Function, LayerVersion, Runtime } from '@aws-cdk/aws-lambda';
+import { Code, LayerVersion, Runtime } from '@aws-cdk/aws-lambda';
+import { NodejsFunction } from '@aws-cdk/aws-lambda-nodejs';
 import { Bucket, EventType } from '@aws-cdk/aws-s3';
 import { BucketDeployment, Source } from '@aws-cdk/aws-s3-deployment';
 import { LambdaDestination } from '@aws-cdk/aws-s3-notifications';
@@ -41,16 +42,18 @@ export class CdkWorkshopStack extends Stack {
 
     const apiCode = Code.fromAsset('dist/api');
 
-    const helloHandler = new Function(this, 'HelloHandler', {
-      code: apiCode,
+    const helloHandler = new NodejsFunction(this, 'HelloHandler', {
+      entry: resolve(rootPath, 'lib/api/hello-lambda.ts'),
       runtime: Runtime.NODEJS_16_X,
-      handler: 'hello-lambda.handler'
     });
 
-    const pinHandler = new Function(this, 'PinHandler', {
-      code: apiCode,
+    const pinHandler = new NodejsFunction(this, 'PinHandler', {
+      entry: resolve(rootPath, 'lib/api/pin-lambda.ts'),
       runtime: Runtime.NODEJS_16_X,
-      handler: 'pin-lambda.handler',
+      // bundling: {
+      //   preCompilation: true,
+      //   tsconfig: resolve(rootPath, 'lib/tsconfig.api.json'),
+      // },
       environment: {
         IMAGE_BUCKET: imageBucket.bucketName,
         PIN_TABLE: pinTable.tableName
@@ -66,10 +69,12 @@ export class CdkWorkshopStack extends Stack {
       description: 'Sharp image processing library v.0.29.2'
     });
 
-    const thumbnailHandler = new Function(this, 'ThumbnailHandler', {
-      code: apiCode,
+    const thumbnailHandler = new NodejsFunction(this, 'ThumbnailHandler', {
+      entry: resolve(rootPath, 'lib/api/thumbnail-lambda.ts'),
       runtime: Runtime.NODEJS_16_X,
-      handler: 'thumbnail-lambda.handler',
+      bundling: {
+        externalModules: ['sharp']
+      },
       layers: [sharpLayer],
       memorySize: 1536,
       timeout: Duration.seconds(60),

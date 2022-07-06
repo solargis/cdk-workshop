@@ -15,6 +15,7 @@
     "@angular/cli": "^12.2.12",
     "@angular/compiler-cli": "^12.2.12",
     "@angular/language-service": "^12.2.12",
+    "@aws-cdk/aws-lambda-nodejs": "^1.161.0",
     "@types/app-root-path": "^1.2.4",
     "@types/aws-lambda": "^8.10.85",
     "@types/node": "^12.11.1",
@@ -22,6 +23,7 @@
     "@types/uuid": "^3.4.5",
     "aws-cdk": "^1.91.0",
     "concurrently": "^5.0.0",
+    "parcel-plugin-externals": "^0.5.2",
     "serverless": "^2.64.1",
     "serverless-dynamodb-local": "^0.2.40",
     "serverless-offline": "^8.2.0",
@@ -67,5 +69,8 @@
     "tslib": "^2.0.0",
     "uuid": "^3.3.3",
     "zone.js": "~0.11.4"
-  }
+  },
+  "externals": [
+    "aws-sdk", "sharp"
+  ]
 }

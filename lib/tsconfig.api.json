@@ -2,7 +2,8 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../dist/api",
-    "declaration": false
+    "declaration": false,
+    "esModuleInterop": true
   },
   "include": ["api"],
   "exclude": ["node_modules/**", "web*"]

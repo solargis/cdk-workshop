@@ -1,4 +1,4 @@
-import * as S3 from 'aws-sdk/clients/s3';
+import { S3 } from 'aws-sdk';
 import { createWriteStream } from 'fs';
 
 import { Image, SavedImage, SavedPin } from '../../shared/types/pin.types';
@@ -36,14 +36,14 @@ export async function saveImageToS3(s3key: string, unsavedImage: Image & { dataB
 }
 
 export async function deleteImageFromS3(pin: SavedPin) {
-  if (pin.image) {
+  if (pin.image?.s3key) {
     console.log('Deleting pin image from S3: ', pin.image.s3key);
     await s3.deleteObjects({
       Bucket: imageBucket,
       Delete: { Objects: [{ Key: pin.image.s3key }] }
     }).promise();
   }
-  if (pin.thumbnail) {
+  if (pin.thumbnail?.s3key) {
     console.log('Deleting pin thumbnail from S3: ', pin.thumbnail.s3key);
     await s3.deleteObjects({
       Bucket: imageBucket,

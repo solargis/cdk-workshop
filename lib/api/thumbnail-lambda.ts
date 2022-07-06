@@ -1,8 +1,8 @@
 import { Callback, Context, S3CreateEvent } from 'aws-lambda';
 import { DynamoDB } from 'aws-sdk';
-import * as del from 'del';
+import del from 'del';
 import { join, parse } from 'path';
-import * as sharp from 'sharp';
+import sharp from 'sharp';
 import { v4 } from 'uuid';
 
 import { copyFromS3, saveImageToS3 } from './utils/s3.utils';
