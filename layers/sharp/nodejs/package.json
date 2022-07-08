@@ -1,0 +1,7 @@
+{
+  "name": "@solargis-layer/sharp",
+  "version": "1.0.0",
+  "dependencies": {
+    "sharp": "^0.30.7"
+  }
+}

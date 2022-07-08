@@ -40,48 +40,47 @@ export class CdkWorkshopStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY
     });
 
-    const apiCode = Code.fromAsset('dist/api');
+    const environment = {
+      IMAGE_BUCKET: imageBucket.bucketName,
+      PIN_TABLE: pinTable.tableName
+    };
 
     const helloHandler = new NodejsFunction(this, 'HelloHandler', {
       entry: resolve(rootPath, 'lib/api/hello-lambda.ts'),
       runtime: Runtime.NODEJS_16_X,
+      environment
     });
 
     const pinHandler = new NodejsFunction(this, 'PinHandler', {
       entry: resolve(rootPath, 'lib/api/pin-lambda.ts'),
+      timeout: Duration.seconds(30),
       runtime: Runtime.NODEJS_16_X,
-      // bundling: {
-      //   preCompilation: true,
-      //   tsconfig: resolve(rootPath, 'lib/tsconfig.api.json'),
-      // },
-      environment: {
-        IMAGE_BUCKET: imageBucket.bucketName,
-        PIN_TABLE: pinTable.tableName
-      }
+      memorySize: 512,
+      bundling: {
+        externalModules: ['aws-sdk']
+      },
+      environment
     });
     imageBucket.grantReadWrite(pinHandler);
     pinTable.grantReadWriteData(pinHandler);
 
     const sharpLayer = new LayerVersion(this, `SharpLayer_${props.userName}`, {
-      code: Code.fromAsset('lib/layers/sharp_layer.zip'),
+      code: Code.fromAsset('layers/sharp'),
       compatibleRuntimes: [Runtime.NODEJS_12_X, Runtime.NODEJS_14_X, Runtime.NODEJS_16_X],
       license: 'Apache-2.0',
-      description: 'Sharp image processing library v.0.29.2'
+      description: 'Sharp image processing library ^0.30.7'
     });
 
     const thumbnailHandler = new NodejsFunction(this, 'ThumbnailHandler', {
       entry: resolve(rootPath, 'lib/api/thumbnail-lambda.ts'),
       runtime: Runtime.NODEJS_16_X,
       bundling: {
-        externalModules: ['sharp']
+        externalModules: ['aws-sdk', 'sharp']
       },
       layers: [sharpLayer],
       memorySize: 1536,
       timeout: Duration.seconds(60),
-      environment: {
-        IMAGE_BUCKET: imageBucket.bucketName,
-        PIN_TABLE: pinTable.tableName
-      }
+      environment
     });
     imageBucket.grantReadWrite(thumbnailHandler);
     pinTable.grantReadWriteData(thumbnailHandler);

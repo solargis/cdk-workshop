@@ -2,6 +2,6 @@
   "app": "npx ts-node cdk/cdk-workshop.ts",
   "requireApproval": "never",
   "watch": {
-    "include": ["dist"]
+    "include": ["cdk", "lib", "layers", "node_modules"]
   }
 }

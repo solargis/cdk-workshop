@@ -2,11 +2,11 @@
   "name": "cdk-workshop",
   "version": "0.1.0",
   "scripts": {
-    "dev": "concurrently -c gray,yellow,green npm:api:watch npm:api:serve npm:web:serve --kill-others-on-fail",
+    "postinstall": "cd layers/sharp/nodejs && npm i && cd -",
+    "dev": "concurrently -c gray,yellow,green npm:dev:dynamodb npm:api:watch npm:api:serve npm:web:serve --kill-others-on-fail",
+    "dev:dynamodb": "docker run -p 8000:8000 -v $(pwd)/.local/dynamo:/data/ amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb -dbPath /data",
     "build": "npm run api:build && npm run web:build",
-    "api:build": "trash dist/api && webpack --config lib/webpack.api.js",
-    "api:watch": "npm run api:build -- --watch --progress",
-    "api:serve": "sls dynamodb install && sls offline start",
+    "api:build": "cdk synth",
     "web:build": "trash dist/web && ng build --aot --configuration production",
     "web:serve": "ng serve"
   },
@@ -29,11 +29,8 @@
     "serverless-offline": "^8.2.0",
     "serverless-s3-local": "^0.6.20",
     "trash-cli": "^3.0.0",
-    "ts-loader": "^6.2.0",
     "ts-node": "^8.1.0",
-    "typescript": "~4.3.5",
-    "webpack": "^5.73.0",
-    "webpack-cli": "^4.10.0"
+    "typescript": "~4.3.5"
   },
   "dependencies": {
     "@angular/animations": "^12.2.12",
@@ -71,6 +68,7 @@
     "zone.js": "~0.11.4"
   },
   "externals": [
-    "aws-sdk", "sharp"
+    "aws-sdk",
+    "sharp"
   ]
 }
