@@ -20,6 +20,6 @@
     "typeRoots": ["./node_modules/@types"],
     "esModuleInterop": true
   },
-  "include": ["cdk"],
+  "include": ["cdk", "scripts"],
   "exclude": ["cdk.out", "lib"]
 }

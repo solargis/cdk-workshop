@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import { App } from '@aws-cdk/core';
-import IAM from 'aws-sdk/clients/iam';
 
 import { CdkWorkshopStack } from './cdk-workshop-stack';
+import { getAwsStackName, getAwsUserName } from '../scripts/stack.utils';
 
-new IAM().getUser((err, res) => {
-  const userName = res.User.UserName;
-  const app = new App();
-  new CdkWorkshopStack(app, `cdk-workshop-${userName}`, { userName });
-});
+getAwsUserName()
+  .then(async userName => {
+    const stackName = await getAwsStackName(userName);
+    const app = new App();
+    new CdkWorkshopStack(app, stackName, { userName });
+  });
