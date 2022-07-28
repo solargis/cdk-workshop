@@ -43,17 +43,17 @@ import { Pin } from 'shared/types/pin.types';
 export class HeaderComponent implements OnInit {
 
   @Input() pin: Pin;
-  
+
   isDesktop: boolean;
   searchActive = false;
-  
+
   ngOnInit(): void {
     this.onResize();
   }
-  
+
   @HostListener('window:resize')
   onResize() {
     this.isDesktop = window.innerWidth > 863;
   }
-  
+
 }

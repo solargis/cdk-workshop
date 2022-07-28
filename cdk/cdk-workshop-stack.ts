@@ -27,7 +27,7 @@ export class CdkWorkshopStack extends Stack {
     tags.add('team', 'webapps');
     tags.add('app', 'CDK workshop');
 
-    // API
+    // API resources
 
     const imageBucket = new Bucket(this, 'ImageBucket');
 
@@ -40,6 +40,35 @@ export class CdkWorkshopStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY
     });
 
+    // Lambda layers
+
+    const apiDependenciesLayer = new LayerVersion(this, `ApiDependenciesLayer_${props.userName}`, {
+      code: Code.fromAsset('layers/api-deps', { exclude: ['nodejs/node_modules/@types'] }),
+      compatibleRuntimes: [Runtime.NODEJS_14_X, Runtime.NODEJS_16_X],
+      license: 'Apache-2.0',
+      description: 'Node dependencies for API lambda handlers'
+    });
+
+    const sharpLayer = new LayerVersion(this, `SharpLayer_${props.userName}`, {
+      code: Code.fromAsset('layers/sharp'),
+      compatibleRuntimes: [Runtime.NODEJS_14_X, Runtime.NODEJS_16_X],
+      license: 'Apache-2.0',
+      description: 'Sharp image processing library ^0.30.7'
+    });
+
+    const layersMap = {
+      apiDependencies: {
+        layer: apiDependenciesLayer,
+        externalModules: ['aws-sdk', 'del', 'tslib', 'uuid'] // TODO read from layer's package.json + 'aws-sdk'
+      },
+      sharp: {
+        layer: sharpLayer,
+        externalModules: ['sharp'] // TODO read from layer's package.json
+      }
+    }
+
+    // Lambda handlers
+
     const environment = {
       IMAGE_BUCKET: imageBucket.bucketName,
       PIN_TABLE: pinTable.tableName
@@ -48,6 +77,10 @@ export class CdkWorkshopStack extends Stack {
     const helloHandler = new NodejsFunction(this, 'HelloHandler', {
       entry: resolve(rootPath, 'lib/api/hello-lambda.ts'),
       runtime: Runtime.NODEJS_16_X,
+      bundling: {
+        externalModules: layersMap.apiDependencies.externalModules
+      },
+      layers: [layersMap.apiDependencies.layer],
       environment
     });
 
@@ -57,29 +90,23 @@ export class CdkWorkshopStack extends Stack {
       runtime: Runtime.NODEJS_16_X,
       memorySize: 512,
       bundling: {
-        externalModules: ['aws-sdk']
+        externalModules: layersMap.apiDependencies.externalModules
       },
+      layers: [layersMap.apiDependencies.layer],
       environment
     });
     imageBucket.grantReadWrite(pinHandler);
     pinTable.grantReadWriteData(pinHandler);
 
-    const sharpLayer = new LayerVersion(this, `SharpLayer_${props.userName}`, {
-      code: Code.fromAsset('layers/sharp'),
-      compatibleRuntimes: [Runtime.NODEJS_12_X, Runtime.NODEJS_14_X, Runtime.NODEJS_16_X],
-      license: 'Apache-2.0',
-      description: 'Sharp image processing library ^0.30.7'
-    });
-
     const thumbnailHandler = new NodejsFunction(this, 'ThumbnailHandler', {
       entry: resolve(rootPath, 'lib/api/thumbnail-lambda.ts'),
       runtime: Runtime.NODEJS_16_X,
       bundling: {
-        externalModules: ['aws-sdk', 'sharp']
+        externalModules: [...layersMap.apiDependencies.externalModules, ...layersMap.sharp.externalModules]
       },
-      layers: [sharpLayer],
+      layers: [layersMap.apiDependencies.layer, layersMap.sharp.layer],
       memorySize: 1536,
-      timeout: Duration.seconds(60),
+      timeout: Duration.seconds(30),
       environment
     });
     imageBucket.grantReadWrite(thumbnailHandler);

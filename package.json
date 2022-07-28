@@ -2,14 +2,19 @@
   "name": "cdk-workshop",
   "version": "0.1.0",
   "scripts": {
-    "postinstall": "cd layers/sharp/nodejs && npm i && cd -",
+    "postinstall": "concurrently npm:install:api-deps-layer npm:install:sharp-layer --kill-others-on-fail",
+    "install:api-deps-layer": "cd layers/api-deps/nodejs && npm install --omit=dev && cd -",
+    "install:sharp-layer": "cd layers/sharp/nodejs && npm install --omit=dev && cd -",
     "dev": "concurrently -c gray,yellow,green npm:api:build npm:api:serve npm:web:serve --kill-others-on-fail",
-    "dynamo:launch": "docker run -p 8000:8000 -v $(pwd)/.local/dynamo:/data/ amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb -dbPath /data",
-    "dynamo:ensure": "ts-node -e \"require('./scripts/ensure-tables').ensureTables()\"",
+    "cdk:dev": "npm run web:build && cdk deploy --watch",
+    "cdk:deploy": "npm run web:build && cdk deploy",
+    "dynamo:launch:example": "docker run -p 8000:8000 -v $(pwd)/.local/dynamo:/data/ amazon/dynamodb-local -jar DynamoDBLocal.jar -sharedDb -dbPath /data",
     "build": "npm run api:build && npm run web:build",
     "api:build": "cdk synth",
-    "api:serve": "sls dynamodb install & sls offline start",
-    "web:build": "trash dist/web && ng build --aot --configuration production",
+    "api:serve": "sls dynamodb install && sls offline start",
+    "preweb:build": "trash dist/web",
+    "web:build": "ng build --aot --configuration production",
+    "web:watch": "npm run web:build -- --watch",
     "web:serve": "ng serve"
   },
   "devDependencies": {
@@ -32,6 +37,7 @@
     "serverless-dynamodb-local": "^0.2.40",
     "serverless-offline": "^8.8.0",
     "serverless-s3-local": "^0.6.20",
+    "sharp": "^0.30.7",
     "trash-cli": "^3.0.0",
     "ts-node": "^8.1.0",
     "typescript": "~4.3.5",
@@ -58,7 +64,7 @@
     "@aws-cdk/core": "^1.91.0",
     "@ngxs/store": "^3.7.2",
     "app-root-path": "^2.2.1",
-    "aws-lambda": "^1.0.6",
+    "aws-lambda": "^1.0.7",
     "aws-sdk": "^2.1017.0",
     "cfn-response": "^1.0.1",
     "del": "^5.1.0",
@@ -66,14 +72,9 @@
     "lodash.isequal": "^4.5.0",
     "ngx-filesize": "^2.0.16",
     "rxjs": "^6.4.0",
-    "sharp": "^0.29.2",
     "source-map-support": "^0.5.9",
     "tslib": "^2.0.0",
-    "uuid": "^3.3.3",
+    "uuid": "^3.4.0",
     "zone.js": "~0.11.4"
-  },
-  "externals": [
-    "aws-sdk",
-    "sharp"
-  ]
+  }
 }
