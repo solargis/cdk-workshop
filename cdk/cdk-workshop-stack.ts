@@ -9,6 +9,7 @@ import { BucketDeployment, Source } from '@aws-cdk/aws-s3-deployment';
 import { LambdaDestination } from '@aws-cdk/aws-s3-notifications';
 import { path as rootPath } from 'app-root-path';
 import { resolve } from 'path';
+import readJsonSync from 'read-json-sync';
 
 import { addCorsOptions } from './cors.utils';
 import { WebIndex } from './web-index';
@@ -56,15 +57,10 @@ export class CdkWorkshopStack extends Stack {
       description: 'Sharp image processing library ^0.30.7'
     });
 
-    const layersMap = {
-      apiDependencies: {
-        layer: apiDependenciesLayer,
-        externalModules: ['aws-sdk', 'del', 'tslib', 'uuid'] // TODO read from layer's package.json + 'aws-sdk'
-      },
-      sharp: {
-        layer: sharpLayer,
-        externalModules: ['sharp'] // TODO read from layer's package.json
-      }
+    // TODO make util/extend LayerVersion
+    const getLayerExternalModules = (path: string) => {
+      const layerPackage = readJsonSync(resolve(rootPath, `${path}/nodejs/package.json`), { encoding: 'utf8' });
+      return Object.keys(layerPackage.dependencies);
     }
 
     // Lambda handlers
@@ -78,9 +74,9 @@ export class CdkWorkshopStack extends Stack {
       entry: resolve(rootPath, 'lib/api/hello-lambda.ts'),
       runtime: Runtime.NODEJS_16_X,
       bundling: {
-        externalModules: layersMap.apiDependencies.externalModules
+        externalModules: ['aws-sdk', ...getLayerExternalModules('layers/api-deps')]
       },
-      layers: [layersMap.apiDependencies.layer],
+      layers: [apiDependenciesLayer],
       environment
     });
 
@@ -90,9 +86,9 @@ export class CdkWorkshopStack extends Stack {
       runtime: Runtime.NODEJS_16_X,
       memorySize: 512,
       bundling: {
-        externalModules: layersMap.apiDependencies.externalModules
+        externalModules: ['aws-sdk', ...getLayerExternalModules('layers/api-deps')]
       },
-      layers: [layersMap.apiDependencies.layer],
+      layers: [apiDependenciesLayer],
       environment
     });
     imageBucket.grantReadWrite(pinHandler);
@@ -102,9 +98,13 @@ export class CdkWorkshopStack extends Stack {
       entry: resolve(rootPath, 'lib/api/thumbnail-lambda.ts'),
       runtime: Runtime.NODEJS_16_X,
       bundling: {
-        externalModules: [...layersMap.apiDependencies.externalModules, ...layersMap.sharp.externalModules]
+        externalModules: [
+          'aws-sdk',
+          ...getLayerExternalModules('layers/api-deps'),
+          ...getLayerExternalModules('layers/sharp')
+        ]
       },
-      layers: [layersMap.apiDependencies.layer, layersMap.sharp.layer],
+      layers: [apiDependenciesLayer, sharpLayer],
       memorySize: 1536,
       timeout: Duration.seconds(30),
       environment
