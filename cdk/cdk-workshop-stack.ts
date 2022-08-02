@@ -1,12 +1,16 @@
-import { LambdaIntegration, RestApi } from '@aws-cdk/aws-apigateway';
-import { CloudFrontWebDistribution, CloudFrontWebDistributionProps, PriceClass } from '@aws-cdk/aws-cloudfront';
-import { CfnOutput, Construct, Duration, RemovalPolicy, Stack, StackProps, Tags } from '@aws-cdk/core';
-import { AttributeType, BillingMode, Table } from '@aws-cdk/aws-dynamodb';
-import { Code, LayerVersion, Runtime } from '@aws-cdk/aws-lambda';
-import { NodejsFunction } from '@aws-cdk/aws-lambda-nodejs';
-import { Bucket, EventType } from '@aws-cdk/aws-s3';
-import { BucketDeployment, Source } from '@aws-cdk/aws-s3-deployment';
-import { LambdaDestination } from '@aws-cdk/aws-s3-notifications';
+import {
+  aws_apigateway,
+  aws_cloudfront,
+  aws_dynamodb,
+  aws_lambda,
+  aws_lambda_nodejs,
+  aws_s3,
+  aws_s3_deployment,
+  aws_s3_notifications
+} from 'aws-cdk-lib';
+import { CfnOutput, Duration, RemovalPolicy, Stack, StackProps, Tags } from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+
 import { path as rootPath } from 'app-root-path';
 import { resolve } from 'path';
 import readJsonSync from 'read-json-sync';
@@ -30,29 +34,29 @@ export class CdkWorkshopStack extends Stack {
 
     // API resources
 
-    const imageBucket = new Bucket(this, 'ImageBucket');
+    const imageBucket = new aws_s3.Bucket(this, 'ImageBucket');
 
-    const pinTable = new Table(this, 'PinTable', {
+    const pinTable = new aws_dynamodb.Table(this, 'PinTable', {
       partitionKey: {
         name: 'pointUrl',
-        type: AttributeType.STRING
+        type: aws_dynamodb.AttributeType.STRING
       },
-      billingMode: BillingMode.PAY_PER_REQUEST,
+      billingMode: aws_dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.DESTROY
     });
 
     // Lambda layers
 
-    const apiDependenciesLayer = new LayerVersion(this, `ApiDependenciesLayer_${props.userName}`, {
-      code: Code.fromAsset('layers/api-deps', { exclude: ['nodejs/node_modules/@types'] }),
-      compatibleRuntimes: [Runtime.NODEJS_14_X, Runtime.NODEJS_16_X],
+    const apiDependenciesLayer = new aws_lambda.LayerVersion(this, `ApiDependenciesLayer_${props.userName}`, {
+      code: aws_lambda.Code.fromAsset('layers/api-deps', { exclude: ['nodejs/node_modules/@types'] }),
+      compatibleRuntimes: [aws_lambda.Runtime.NODEJS_14_X, aws_lambda.Runtime.NODEJS_16_X],
       license: 'Apache-2.0',
       description: 'Node dependencies for API lambda handlers'
     });
 
-    const sharpLayer = new LayerVersion(this, `SharpLayer_${props.userName}`, {
-      code: Code.fromAsset('layers/sharp'),
-      compatibleRuntimes: [Runtime.NODEJS_14_X, Runtime.NODEJS_16_X],
+    const sharpLayer = new aws_lambda.LayerVersion(this, `SharpLayer_${props.userName}`, {
+      code: aws_lambda.Code.fromAsset('layers/sharp'),
+      compatibleRuntimes: [aws_lambda.Runtime.NODEJS_14_X, aws_lambda.Runtime.NODEJS_16_X],
       license: 'Apache-2.0',
       description: 'Sharp image processing library ^0.30.7'
     });
@@ -70,9 +74,9 @@ export class CdkWorkshopStack extends Stack {
       PIN_TABLE: pinTable.tableName
     };
 
-    const helloHandler = new NodejsFunction(this, 'HelloHandler', {
+    const helloHandler = new aws_lambda_nodejs.NodejsFunction(this, 'HelloHandler', {
       entry: resolve(rootPath, 'lib/api/hello-lambda.ts'),
-      runtime: Runtime.NODEJS_16_X,
+      runtime: aws_lambda.Runtime.NODEJS_16_X,
       bundling: {
         externalModules: ['aws-sdk', ...getLayerExternalModules('layers/api-deps')]
       },
@@ -80,10 +84,10 @@ export class CdkWorkshopStack extends Stack {
       environment
     });
 
-    const pinHandler = new NodejsFunction(this, 'PinHandler', {
+    const pinHandler = new aws_lambda_nodejs.NodejsFunction(this, 'PinHandler', {
       entry: resolve(rootPath, 'lib/api/pin-lambda.ts'),
       timeout: Duration.seconds(30),
-      runtime: Runtime.NODEJS_16_X,
+      runtime: aws_lambda.Runtime.NODEJS_16_X,
       memorySize: 512,
       bundling: {
         externalModules: ['aws-sdk', ...getLayerExternalModules('layers/api-deps')]
@@ -94,9 +98,9 @@ export class CdkWorkshopStack extends Stack {
     imageBucket.grantReadWrite(pinHandler);
     pinTable.grantReadWriteData(pinHandler);
 
-    const thumbnailHandler = new NodejsFunction(this, 'ThumbnailHandler', {
+    const thumbnailHandler = new aws_lambda_nodejs.NodejsFunction(this, 'ThumbnailHandler', {
       entry: resolve(rootPath, 'lib/api/thumbnail-lambda.ts'),
-      runtime: Runtime.NODEJS_16_X,
+      runtime: aws_lambda.Runtime.NODEJS_16_X,
       bundling: {
         externalModules: [
           'aws-sdk',
@@ -110,47 +114,48 @@ export class CdkWorkshopStack extends Stack {
       environment
     });
     imageBucket.grantReadWrite(thumbnailHandler);
+    imageBucket.grantPutAcl(thumbnailHandler);
     pinTable.grantReadWriteData(thumbnailHandler);
 
     // S3 integration
     imageBucket.addEventNotification(
-      EventType.OBJECT_CREATED,
-      new LambdaDestination(thumbnailHandler),
+      aws_s3.EventType.OBJECT_CREATED,
+      new aws_s3_notifications.LambdaDestination(thumbnailHandler),
       { prefix: 'original' }
     );
 
-    const api = new RestApi(this, `CdkWorkshopAPI_${props.userName}`);
+    const api = new aws_apigateway.RestApi(this, `CdkWorkshopAPI_${props.userName}`);
     Tags.of(api).add('public', 'true')
 
     const helloApi = api.root.addResource('hello');
-    helloApi.addMethod('GET', new LambdaIntegration(helloHandler));
+    helloApi.addMethod('GET', new aws_apigateway.LambdaIntegration(helloHandler));
 
     const pinApi = api.root.addResource('pin');
 
     // OPTIONS /pin
     addCorsOptions(pinApi);
     // ANY /pin
-    pinApi.addMethod('ANY', new LambdaIntegration(pinHandler));
+    pinApi.addMethod('ANY', new aws_apigateway.LambdaIntegration(pinHandler));
 
     const pinPointApi = pinApi.addResource('{pointUrl}');
 
     // OPTIONS /pin/{pointUrl}
     addCorsOptions(pinPointApi);
     // ANY /pin/{pointUrl}
-    pinPointApi.addMethod('ANY', new LambdaIntegration(pinHandler));
+    pinPointApi.addMethod('ANY', new aws_apigateway.LambdaIntegration(pinHandler));
 
     // WEB
 
-    const webBucket = new Bucket(this, 'WebBucket', {
+    const webBucket = new aws_s3.Bucket(this, 'WebBucket', {
       websiteIndexDocument: 'index.html'
     });
 
     webBucket.grantPublicAccess();
     Tags.of(webBucket).add('public', 'true');
 
-    const webSource = Source.asset(resolve(rootPath, 'dist/web'));
+    const webSource = aws_s3_deployment.Source.asset(resolve(rootPath, 'dist/web'));
 
-    const webDeployment = new BucketDeployment(this, 'WebDeployment', {
+    const webDeployment = new aws_s3_deployment.BucketDeployment(this, 'WebDeployment', {
       sources: [webSource],
       destinationBucket: webBucket
     });
@@ -169,8 +174,8 @@ export class CdkWorkshopStack extends Stack {
 
     // CDN
 
-    const cloudFrontProps: CloudFrontWebDistributionProps = {
-      priceClass: PriceClass.PRICE_CLASS_100,
+    const cloudFrontProps: aws_cloudfront.CloudFrontWebDistributionProps = {
+      priceClass: aws_cloudfront.PriceClass.PRICE_CLASS_100,
       originConfigs: [{
         s3OriginSource: { s3BucketSource: webBucket },
         behaviors: [
@@ -185,8 +190,8 @@ export class CdkWorkshopStack extends Stack {
       }]
     };
 
-    const cloudFront = new CloudFrontWebDistribution(this, 'WebDistribution', cloudFrontProps);
+    const cloudFront = new aws_cloudfront.CloudFrontWebDistribution(this, 'WebDistribution', cloudFrontProps);
 
-    new CfnOutput(this, 'WebDistributionDomainName', { value: cloudFront.domainName });
+    new CfnOutput(this, 'WebDistributionDomainName', { value: cloudFront.distributionDomainName });
   }
 }

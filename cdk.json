@@ -3,5 +3,8 @@
   "requireApproval": "never",
   "watch": {
     "include": ["cdk", "dist/web","lib/api", "lib/shared", "layers", "node_modules"]
+  },
+  "context": {
+    "@aws-cdk/core:stackRelativeExports": false
   }
 }

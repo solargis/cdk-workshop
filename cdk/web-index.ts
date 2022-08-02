@@ -1,17 +1,14 @@
-import { Role } from '@aws-cdk/aws-iam';
-import { Code, Runtime, SingletonFunction } from '@aws-cdk/aws-lambda';
-import { RetentionDays } from '@aws-cdk/aws-logs';
-import { IBucket } from '@aws-cdk/aws-s3';
-import { ISource } from '@aws-cdk/aws-s3-deployment';
-import { Construct, CustomResource, Duration } from '@aws-cdk/core';
-import { Provider } from '@aws-cdk/custom-resources';
+import { aws_iam, aws_lambda, aws_logs, aws_s3, aws_s3_deployment, custom_resources } from 'aws-cdk-lib';
+import { CustomResource, Duration } from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+
 import { path as rootPath } from 'app-root-path';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
 export interface WebDeploymentProps {
-  bucket: IBucket;
-  source: ISource;
+  bucket: aws_s3.IBucket;
+  source: aws_s3_deployment.ISource;
   apiBaseUrl: string;
 }
 
@@ -22,10 +19,10 @@ export class WebIndex extends Construct {
     const handlerPath = resolve(rootPath, 'cdk/web-index-lambda.js');
     const handlerCode = readFileSync(handlerPath, 'utf8');
 
-    const handler = new SingletonFunction(this, 'WebIndexLambda', {
+    const handler = new aws_lambda.SingletonFunction(this, 'WebIndexLambda', {
       uuid: '4c84aa14-4077-11e9-bd73-47fe778e69cb',
-      code: Code.fromInline(handlerCode),
-      runtime: Runtime.NODEJS_16_X,
+      code: aws_lambda.Code.fromInline(handlerCode),
+      runtime: aws_lambda.Runtime.NODEJS_16_X,
       handler: 'index.handler',
       lambdaPurpose: 'Custom::CDKWebIndex',
       timeout: Duration.seconds(30)
@@ -33,11 +30,11 @@ export class WebIndex extends Construct {
 
     props.bucket.grantReadWrite(handler);
 
-    const { zipObjectKey } = props.source.bind(this, { handlerRole: handler.role as Role });
+    const { zipObjectKey } = props.source.bind(this, { handlerRole: handler.role as aws_iam.Role });
 
-    const webIndexProvider = new Provider(this, 'WebIndexProvider', {
+    const webIndexProvider = new custom_resources.Provider(this, 'WebIndexProvider', {
       onEventHandler: handler,
-      logRetention: RetentionDays.ONE_DAY
+      logRetention: aws_logs.RetentionDays.ONE_DAY
     });
 
     new CustomResource(this, 'WebIndexResource', {
