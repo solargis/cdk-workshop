@@ -1,9 +1,10 @@
-import { CustomResource, CustomResourceProvider } from '@aws-cdk/aws-cloudformation';
 import { Role } from '@aws-cdk/aws-iam';
 import { Code, Runtime, SingletonFunction } from '@aws-cdk/aws-lambda';
+import { RetentionDays } from '@aws-cdk/aws-logs';
 import { IBucket } from '@aws-cdk/aws-s3';
 import { ISource } from '@aws-cdk/aws-s3-deployment';
-import { Construct, Duration } from '@aws-cdk/core';
+import { Construct, CustomResource, Duration } from '@aws-cdk/core';
+import { Provider } from '@aws-cdk/custom-resources';
 import { path as rootPath } from 'app-root-path';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
@@ -34,8 +35,13 @@ export class WebIndex extends Construct {
 
     const { zipObjectKey } = props.source.bind(this, { handlerRole: handler.role as Role });
 
-    new CustomResource(this, 'CustomResource', {
-      provider: CustomResourceProvider.fromLambda(handler),
+    const webIndexProvider = new Provider(this, 'WebIndexProvider', {
+      onEventHandler: handler,
+      logRetention: RetentionDays.ONE_DAY
+    });
+
+    new CustomResource(this, 'WebIndexResource', {
+      serviceToken: webIndexProvider.serviceToken,
       resourceType: 'Custom::CDKWebIndex',
       properties: {
         ApiBaseUrl: props.apiBaseUrl,
