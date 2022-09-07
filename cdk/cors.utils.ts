@@ -1,7 +1,7 @@
-import { aws_apigateway } from 'aws-cdk-lib';
+import { IResource, MockIntegration, PassthroughBehavior } from 'aws-cdk-lib/aws-apigateway';
 
-export function addCorsOptions(apiResource: aws_apigateway.IResource, ...customHeaders: string[]) {
-  apiResource.addMethod('OPTIONS', new aws_apigateway.MockIntegration({
+export function addCorsOptions(apiResource: IResource, ...customHeaders: string[]) {
+  apiResource.addMethod('OPTIONS', new MockIntegration({
     integrationResponses: [{
       statusCode: '200',
       responseParameters: {
@@ -13,7 +13,7 @@ export function addCorsOptions(apiResource: aws_apigateway.IResource, ...customH
         'method.response.header.Access-Control-Allow-Methods': "'OPTIONS,GET,PUT,POST,PATCH,DELETE'",
       },
     }],
-    passthroughBehavior: aws_apigateway.PassthroughBehavior.NEVER,
+    passthroughBehavior: PassthroughBehavior.NEVER,
     requestTemplates: {
       "application/json": "{\"statusCode\": 200}"
     },
