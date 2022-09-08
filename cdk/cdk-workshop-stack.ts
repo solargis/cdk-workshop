@@ -11,10 +11,10 @@ import { Construct } from 'constructs';
 
 import { path as rootPath } from 'app-root-path';
 import { resolve } from 'path';
-import readJsonSync from 'read-json-sync';
 
 import { addCorsOptions } from './cors.utils';
 import { WebIndex } from './web-index';
+import { getLayerExternalModules } from '../scripts/stack.utils';
 
 export interface CdkWorkshopStackProps extends StackProps {
   userName: string;
@@ -58,12 +58,6 @@ export class CdkWorkshopStack extends Stack {
       license: 'Apache-2.0',
       description: 'Sharp image processing library ^0.30.7'
     });
-
-    // TODO make util/extend LayerVersion
-    const getLayerExternalModules = (path: string) => {
-      const layerPackage = readJsonSync(resolve(rootPath, `${path}/nodejs/package.json`), { encoding: 'utf8' });
-      return Object.keys(layerPackage.dependencies);
-    }
 
     // Lambda handlers
 
