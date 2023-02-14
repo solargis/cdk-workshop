@@ -1,6 +1,14 @@
-import { CfnOutput, Duration, RemovalPolicy, Stack, StackProps, Tags } from 'aws-cdk-lib';
+import { CfnElement, CfnOutput, Duration, RemovalPolicy, Stack, StackProps, Tags } from 'aws-cdk-lib';
 import { LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
-import { CloudFrontWebDistribution, CloudFrontWebDistributionProps, PriceClass } from 'aws-cdk-lib/aws-cloudfront';
+import {
+  BehaviorOptions,
+  CachePolicy,
+  Distribution,
+  PriceClass,
+  ResponseHeadersPolicy,
+  ViewerProtocolPolicy
+} from 'aws-cdk-lib/aws-cloudfront';
+import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
 import { Code, LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
@@ -134,12 +142,7 @@ export class CdkWorkshopStack extends Stack {
 
     // WEB
 
-    const webBucket = new Bucket(this, 'WebBucket', {
-      websiteIndexDocument: 'index.html'
-    });
-
-    webBucket.grantPublicAccess();
-    Tags.of(webBucket).add('public', 'true');
+    const webBucket = new Bucket(this, 'WebBucket');
 
     const webSource = Source.asset(resolve(rootPath, 'dist/web'));
 
@@ -156,29 +159,41 @@ export class CdkWorkshopStack extends Stack {
 
     webIndex.node.addDependency(webDeployment);
 
-    new CfnOutput(this, 'WebBucketUrl', {
-      value: webBucket.bucketWebsiteUrl
-    });
-
     // CDN
 
-    const cloudFrontProps: CloudFrontWebDistributionProps = {
-      priceClass: PriceClass.PRICE_CLASS_100,
-      originConfigs: [{
-        s3OriginSource: { s3BucketSource: webBucket },
-        behaviors: [
-          {
-            pathPattern: 'index.html',
-            defaultTtl: Duration.seconds(0),
-            maxTtl: Duration.seconds(0),
-            minTtl: Duration.seconds(0)
-          },
-          { isDefaultBehavior: true }
-        ]
-      }]
+    const behaviorOptions: BehaviorOptions = {
+      origin: new S3Origin(webBucket),
+      compress: true,
+      viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      responseHeadersPolicy: new ResponseHeadersPolicy(this, 'ResponseHeadersPolicy', {
+        securityHeadersBehavior: {
+          contentSecurityPolicy: { contentSecurityPolicy: 'frame-ancestors \'none\'', override: true }
+        }}
+      )
     };
 
-    const cloudFront = new CloudFrontWebDistribution(this, 'WebDistribution', cloudFrontProps);
+    const cloudFront = new Distribution(this, 'WebDistribution', {
+      priceClass: PriceClass.PRICE_CLASS_100,
+      defaultRootObject: 'index.html',
+      errorResponses: [
+        { ttl: Duration.millis(0), httpStatus: 403, responseHttpStatus: 200, responsePagePath: '/index.html' },
+        { ttl: Duration.millis(0), httpStatus: 404, responseHttpStatus: 200, responsePagePath: '/index.html' }
+      ],
+      defaultBehavior: behaviorOptions,
+      additionalBehaviors: {
+        'index.html': {
+          ...behaviorOptions,
+          cachePolicy: new CachePolicy(this, 'IndexCachePolicy', { // CachePolicy.CACHING_DISABLED
+            defaultTtl: Duration.millis(0),
+            minTtl: Duration.millis(0),
+            maxTtl: Duration.millis(0)
+          })
+        }
+      }
+    });
+    // keep existing CloudFront distribution created via CloudFrontWebDistribution
+    // https://github.com/aws/aws-cdk/issues/12707
+    (<any>(cloudFront.node.defaultChild as CfnElement).node).id = 'CFDistribution';
 
     new CfnOutput(this, 'WebDistributionDomainName', { value: cloudFront.distributionDomainName });
   }
