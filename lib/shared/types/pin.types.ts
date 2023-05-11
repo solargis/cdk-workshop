@@ -24,10 +24,18 @@ export interface SavedImage extends Image {
   url?: string;
 }
 
-export interface SavedPin extends Pin {
+export interface SavedPinKey {
   pointUrl: string;
+}
+
+export interface SavedPin extends SavedPinKey, Pin {
   sourceIp: string;
   created: number;
   image?: SavedImage;
   thumbnail?: SavedImage;
+}
+
+export interface SavedPinChange extends SavedPinKey {
+  eventName?: 'INSERT' | 'MODIFY' | 'REMOVE';
+  NewImage?: SavedPin
 }

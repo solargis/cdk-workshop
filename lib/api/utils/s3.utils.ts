@@ -52,7 +52,8 @@ export async function deleteImageFromS3(pin: SavedPin) {
   }
 }
 
-export function resolveSignedUrl(pin: SavedPin): SavedPin {
+export function resolveSignedUrl(pin?: SavedPin): SavedPin | undefined {
+  if (!pin) return pin;
   const { image, ...pinFields } = pin;
   if (image) {
     const url = getDownloadUrl(image.s3key, image.name);

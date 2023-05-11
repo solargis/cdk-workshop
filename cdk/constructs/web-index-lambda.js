@@ -4,7 +4,7 @@ const response = require('cfn-response');
 const s3 = new AWS.S3();
 
 module.exports.handler = (event, context, callback) => {
-  const { WebBucketName, ApiBaseUrl } = event.ResourceProperties;
+  const { WebBucketName, WebSocketEndpointUrl, ApiBaseUrl } = event.ResourceProperties;
 
   switch (event.RequestType) {
     case "Create":
@@ -27,7 +27,11 @@ module.exports.handler = (event, context, callback) => {
 
     } else {
       const apiBaseUrlMeta = `<meta name="x-api-base" content="${ApiBaseUrl}">`;
-      const replacedHtml = html.replace(/<meta name="x-api-base" content=".*">/, apiBaseUrlMeta);
+      const webSocketEndpointMeta = `<meta name="x-ws-endpoint" content="${WebSocketEndpointUrl}">`;
+
+      const replacedHtml = html
+        .replace(/<meta name="x-api-base" content=".*">/, apiBaseUrlMeta)
+        .replace(/<meta name="x-ws-endpoint" content=".*">/, webSocketEndpointMeta);
 
       console.log('Updated index.html:', replacedHtml);
 

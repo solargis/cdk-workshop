@@ -15,13 +15,14 @@ export interface WebDeploymentProps {
   bucket: IBucket;
   source: ISource;
   apiBaseUrl: string;
+  wsEndpointUrl: string;
 }
 
 export class WebIndex extends Construct {
   constructor(scope: Construct, id: string, props: WebDeploymentProps) {
     super(scope, id);
 
-    const handlerPath = resolve(rootPath, 'cdk/web-index-lambda.js');
+    const handlerPath = resolve(rootPath, 'cdk/constructs/web-index-lambda.js');
     const handlerCode = readFileSync(handlerPath, 'utf8');
 
     const handler = new SingletonFunction(this, 'WebIndexLambda', {
@@ -47,6 +48,7 @@ export class WebIndex extends Construct {
       resourceType: 'Custom::CDKWebIndex',
       properties: {
         ApiBaseUrl: props.apiBaseUrl,
+        WebSocketEndpointUrl: props.wsEndpointUrl,
         WebBucketName: props.bucket.bucketName,
         zipObjectKey // force run on update dist/web
       }

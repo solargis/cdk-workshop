@@ -1,3 +1,5 @@
+import { WebSocketApi, WebSocketStage } from '@aws-cdk/aws-apigatewayv2-alpha';
+import { WebSocketLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import { CfnElement, CfnOutput, Duration, RemovalPolicy, Stack, StackProps, Tags } from 'aws-cdk-lib';
 import { LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
 import {
@@ -9,8 +11,8 @@ import {
   ViewerProtocolPolicy
 } from 'aws-cdk-lib/aws-cloudfront';
 import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
-import { AttributeType, BillingMode, Table } from 'aws-cdk-lib/aws-dynamodb';
-import { Code, LayerVersion, Runtime } from 'aws-cdk-lib/aws-lambda';
+import { AttributeType, BillingMode, StreamViewType, Table } from 'aws-cdk-lib/aws-dynamodb';
+import { Code, LayerVersion, Runtime, StartingPosition } from 'aws-cdk-lib/aws-lambda';
 import { NodejsFunction } from 'aws-cdk-lib/aws-lambda-nodejs';
 import { Bucket, EventType } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
@@ -20,8 +22,9 @@ import { Construct } from 'constructs';
 import { path as rootPath } from 'app-root-path';
 import { resolve } from 'path';
 
-import { addCorsOptions } from './cors.utils';
-import { WebIndex } from './web-index';
+import { DynamoStreamNodejsFunction } from './constructs/dynamo-stream-function';
+import { WebIndex } from './constructs/web-index';
+import { addCorsOptions } from './utils/cors.utils';
 import { getLayerExternalModules } from '../scripts/stack.utils';
 
 export interface CdkWorkshopStackProps extends StackProps {
@@ -31,6 +34,69 @@ export interface CdkWorkshopStackProps extends StackProps {
 export class CdkWorkshopStack extends Stack {
   constructor(scope: Construct, id: string, props: CdkWorkshopStackProps) {
     super(scope, id, props);
+
+    // WIP: server push
+
+    const connectionsTable = new Table(this, 'ConnectionsTable', {
+      partitionKey: {
+        name: 'connectionId',
+        type: AttributeType.STRING
+      },
+      billingMode: BillingMode.PAY_PER_REQUEST,
+      removalPolicy: RemovalPolicy.DESTROY
+    });
+
+    const connectHandler = new NodejsFunction(this, 'ConnectHandler',{
+      entry: resolve(rootPath, 'lib/ws/connect-lambda.ts'),
+      runtime: Runtime.NODEJS_16_X,
+      bundling: { externalModules: ['aws-sdk'] },
+      environment: {
+        CONNECTIONS_TABLE: connectionsTable.tableName
+      }
+    });
+    connectionsTable.grantReadWriteData(connectHandler);
+
+    const disconnectHandler = new NodejsFunction(this, 'DisconnectHandler',{
+      entry: resolve(rootPath, 'lib/ws/disconnect-lambda.ts'),
+      runtime: Runtime.NODEJS_16_X,
+      bundling: { externalModules: ['aws-sdk'] },
+      environment: {
+        CONNECTIONS_TABLE: connectionsTable.tableName
+      }
+    });
+    connectionsTable.grantReadWriteData(disconnectHandler);
+
+    const sendMessageHandler = new NodejsFunction(this, 'SendMessageHandler', {
+      entry: resolve(rootPath, 'lib/ws/send-message-lambda.ts'),
+      runtime: Runtime.NODEJS_16_X,
+      bundling: { externalModules: ['aws-sdk'] },
+      environment: {
+        CONNECTIONS_TABLE: connectionsTable.tableName
+      }
+    });
+    connectionsTable.grantReadWriteData(sendMessageHandler);
+
+    const defaultHandler = new NodejsFunction(this, 'DefaultHandler', {
+      entry: resolve(rootPath, 'lib/ws/default-lambda.ts'),
+      runtime: Runtime.NODEJS_16_X,
+      bundling: { externalModules: ['aws-sdk'] },
+      environment: {
+        CONNECTIONS_TABLE: connectionsTable.tableName
+      }
+    });
+
+    const webSocketApi = new WebSocketApi(this, 'WebSocketApi', {
+      connectRouteOptions: { integration: new WebSocketLambdaIntegration('ConnectIntegration', connectHandler) },
+      disconnectRouteOptions: { integration: new WebSocketLambdaIntegration('DisconnectIntegration',disconnectHandler) },
+      defaultRouteOptions: { integration: new WebSocketLambdaIntegration('DefaultIntegration', defaultHandler), returnResponse: true },
+    });
+    webSocketApi.addRoute('sendmessage', {
+      integration: new WebSocketLambdaIntegration('SendMessageIntegration', sendMessageHandler), returnResponse: true
+    });
+    webSocketApi.grantManageConnections(defaultHandler);
+    webSocketApi.grantManageConnections(sendMessageHandler);
+
+    const webSocketStage = new WebSocketStage(this, 'WebSocketStage', { webSocketApi, stageName: 'dev', autoDeploy: true });
 
     // Tags
     const tags = Tags.of(scope);
@@ -47,6 +113,7 @@ export class CdkWorkshopStack extends Stack {
         name: 'pointUrl',
         type: AttributeType.STRING
       },
+      stream: StreamViewType.NEW_AND_OLD_IMAGES,
       billingMode: BillingMode.PAY_PER_REQUEST,
       removalPolicy: RemovalPolicy.DESTROY
     });
@@ -71,7 +138,9 @@ export class CdkWorkshopStack extends Stack {
 
     const environment = {
       IMAGE_BUCKET: imageBucket.bucketName,
-      PIN_TABLE: pinTable.tableName
+      PIN_TABLE: pinTable.tableName,
+      CONNECTIONS_TABLE: connectionsTable.tableName,
+      WS_CALLBACK_URL: webSocketStage.callbackUrl // https:// prefix
     };
 
     const helloHandler = new NodejsFunction(this, 'HelloHandler', {
@@ -97,6 +166,20 @@ export class CdkWorkshopStack extends Stack {
     });
     imageBucket.grantReadWrite(pinHandler);
     pinTable.grantReadWriteData(pinHandler);
+
+    const pinStreamHandler = new DynamoStreamNodejsFunction(this, 'PinStreamHandler', {
+      entry: resolve(rootPath, 'lib/api/pin-stream-lambda.ts'),
+      timeout: Duration.seconds(30),
+      runtime: Runtime.NODEJS_16_X,
+      memorySize: 256,
+      table: pinTable,
+      startingPosition: StartingPosition.LATEST,
+      environment
+    });
+    webSocketApi.grantManageConnections(pinStreamHandler);
+    webSocketStage.grantManagementApiAccess(pinStreamHandler);
+    connectionsTable.grantReadData(pinStreamHandler);
+    imageBucket.grantReadWrite(pinStreamHandler);
 
     const thumbnailHandler = new NodejsFunction(this, 'ThumbnailHandler', {
       entry: resolve(rootPath, 'lib/api/thumbnail-lambda.ts'),
@@ -153,6 +236,7 @@ export class CdkWorkshopStack extends Stack {
 
     const webIndex = new WebIndex(this, 'WebIndex', {
       apiBaseUrl: api.url,
+      wsEndpointUrl: `${webSocketApi.apiEndpoint}/${webSocketStage.stageName}`, // wss:// prefix
       source: webSource,
       bucket: webBucket
     });
