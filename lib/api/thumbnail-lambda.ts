@@ -1,5 +1,5 @@
 import { Callback, Context, S3CreateEvent } from 'aws-lambda';
-import { DynamoDB } from 'aws-sdk';
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import del from 'del';
 import { join, parse } from 'path';
 import sharp from 'sharp';
@@ -11,7 +11,7 @@ import { SavedImage } from '../shared/types/pin.types';
 const pinTable = process.env.PIN_TABLE as string;
 const tempDir = process.env.TEMP_DIR || '/tmp';
 
-const dynamo = new DynamoDB.DocumentClient({
+const dynamo = new DocumentClient({
   endpoint: process.env.DYNAMODB_ENDPOINT
 });
 

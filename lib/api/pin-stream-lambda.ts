@@ -5,10 +5,15 @@ import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { BaseStreamRecord, unmarshallStreamRecords } from './utils/dynamodb-stream.utils';
 import { SavedPin, SavedPinChange, SavedPinKey } from '../shared/types/pin.types';
 import { resolveSignedUrl } from './utils/s3.utils';
+import { handleConnectionError } from './websocket-lambda';
 
 type SavedPinStreamRecord = BaseStreamRecord<SavedPinKey, SavedPin>;
 
-const ddb = new DocumentClient();
+const connectionsTable = process.env.CONNECTIONS_TABLE as string;
+
+const dynamo = new DocumentClient({
+  endpoint: process.env.DYNAMODB_ENDPOINT
+});
 
 export const handler = async (event: DynamoDBStreamEvent, context: Context, callback: Callback) => {
   context.callbackWaitsForEmptyEventLoop = false;
@@ -18,8 +23,8 @@ export const handler = async (event: DynamoDBStreamEvent, context: Context, call
 
     console.log('*** pin data changed ***', JSON.stringify(records, null, 2));
 
-    const connectionsTable = process.env.CONNECTIONS_TABLE as string;
-    const connections = await ddb.scan({ TableName: connectionsTable })
+    const connections = await dynamo
+      .scan({ TableName: connectionsTable })
       .promise()
       .then(result => result.Items);
 
@@ -39,6 +44,7 @@ export const handler = async (event: DynamoDBStreamEvent, context: Context, call
         .map(async ({ connectionId }) => callbackAPI
           .postToConnection({ ConnectionId: connectionId, Data: pinChangesJson })
           .promise()
+          .catch(e => handleConnectionError(e, connectionId))
       );
       await Promise.all(sendMessages);
     }

@@ -16,10 +16,13 @@ export class PinApiService {
     this.wsEndpointUrl = config.wsEndpointUrl;
   }
 
-  listenPinChanges(): Observable<SavedPinChange[]> {
-    const subject = new Subject<SavedPinChange[]>();
+  listenPinChanges(): Observable<SavedPinChange> {
+    const subject = new Subject<SavedPinChange>();
     const socket = new WebSocket(this.wsEndpointUrl);
-    socket.addEventListener('message', ({ data }) => { subject.next(JSON.parse(data)); });
+    socket.addEventListener('message', ({ data }) => {
+      const pinChanges = JSON.parse(data);
+      pinChanges.forEach(pinChange => subject.next(pinChange));
+    });
     // socket.addEventListener('close', () => { subject.complete(); });
     return subject;
   }
@@ -39,9 +42,9 @@ export class PinApiService {
       .delete(this.pinApiUrl + '/' + pointUrl);
   }
 
-  getPin(pointUrl: string): Observable<SavedPin> {
-    return this.http
-      .get<SavedPin>(this.pinApiUrl + '/' + pointUrl);
-  }
+  // getPin(pointUrl: string): Observable<SavedPin> {
+  //   return this.http
+  //     .get<SavedPin>(this.pinApiUrl + '/' + pointUrl);
+  // }
 
 }

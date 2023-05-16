@@ -7,9 +7,12 @@ import type { Serverless } from 'serverless/aws';
 
 const imageBucketLocal = 'ImageBucketLocal';
 const pinTableLocal = 'PinLocal';
+const connectionsTableLocal = 'ConnectionsLocal';
 
 const localPort = {
   http: 4000,
+  websocket: 4001,
+  lambda: 4004,
   s3: 9000,
   dynamodb: 8000
 };
@@ -22,6 +25,7 @@ const serverlessConfiguration: Promise<Serverless> = new Promise(resolve => {
     plugins: [
       'serverless-dynamodb-local',
       'serverless-s3-local',
+      'serverless-plugin-offline-dynamodb-stream',
       'serverless-offline'
     ],
     provider: {
@@ -36,12 +40,16 @@ const serverlessConfiguration: Promise<Serverless> = new Promise(resolve => {
         DYNAMODB_ENDPOINT: 'http://localhost:8000',
         IMAGE_BUCKET: imageBucketLocal,
         PIN_TABLE: pinTableLocal,
+        CONNECTIONS_TABLE: connectionsTableLocal,
         TEMP_DIR: '.local/tmp',
-      }
+      },
+      websocketsApiRouteSelectionExpression: '$request.body.action'
     },
     custom: {
       'serverless-offline': {
-        httpPort: localPort.http
+        httpPort: localPort.http,
+        lambdaPort: localPort.lambda,
+        websocketPort: localPort.websocket
       },
       dynamodb: {
         stages: ['local'],
@@ -51,6 +59,14 @@ const serverlessConfiguration: Promise<Serverless> = new Promise(resolve => {
           sharedDb: true,
           migrate: true
         }
+      },
+      dynamodbStream: {
+        host: 'localhost',
+        port: localPort.dynamodb,
+        pollForever: true,
+        streams: [
+          { table: pinTableLocal, functions: ['pinStream'] },
+        ]
       },
       s3: {
         host: '0.0.0.0',
@@ -70,6 +86,16 @@ const serverlessConfiguration: Promise<Serverless> = new Promise(resolve => {
             TableName: pinTableLocal,
             AttributeDefinitions: [{ AttributeName: 'pointUrl', AttributeType: 'S' }],
             KeySchema: [{ AttributeName: 'pointUrl', KeyType: 'HASH' }],
+            ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 },
+            StreamSpecification: { StreamViewType: 'NEW_AND_OLD_IMAGES' }
+          }
+        },
+        connectionsTableLocal: { // TODO resolve from CDK template
+          Type: 'AWS::DynamoDB::Table',
+          Properties: {
+            TableName: connectionsTableLocal,
+            AttributeDefinitions: [{ AttributeName: 'connectionId', AttributeType: 'S' }],
+            KeySchema: [{ AttributeName: 'connectionId', KeyType: 'HASH' }],
             ProvisionedThroughput: { ReadCapacityUnits: 1, WriteCapacityUnits: 1 }
           }
         }
@@ -89,11 +115,47 @@ const serverlessConfiguration: Promise<Serverless> = new Promise(resolve => {
           { http: { method: 'any', path: '/pin/{pointUrl}', cors: true } }
         ]
       },
+      pinStream: {
+        handler: 'dist/api/pin-stream-lambda.handler',
+        environment: {
+          WS_CALLBACK_URL: `http://localhost:${localPort.websocket}`
+        }
+      },
       thumbnail: {
         handler: 'dist/api/thumbnail-lambda.handler',
         events: [
           { s3: { bucket: imageBucketLocal, event: 's3:ObjectCreated:*', rules: [{ prefix: 'original' }] } }
         ]
+      },
+      connectHandler: {
+        handler: 'dist/api/websocket-lambda.connect',
+        events: [
+          { websocket: { route: '$connect' } }
+        ]
+      },
+      disconnectHandler: {
+        handler: 'dist/api/websocket-lambda.disconnect',
+        events: [
+          { websocket: { route: '$disconnect' } }
+        ]
+      },
+      defaultHandler: {
+        handler: 'dist/api/websocket-lambda.defaultHandler',
+        events: [
+          { websocket: { route: '$default' } }
+        ],
+        environment: {
+          WS_CALLBACK_URL: `http://localhost:${localPort.websocket}`
+        }
+      },
+      sendMessageHandler: {
+        handler: 'dist/api/websocket-lambda.sendMessage',
+        events: [
+          { websocket: { route: 'sendmessage' } }
+        ],
+        environment: {
+          WS_CALLBACK_URL: `http://localhost:${localPort.websocket}`
+        }
       }
     }
   })

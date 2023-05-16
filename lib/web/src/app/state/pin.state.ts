@@ -71,25 +71,22 @@ export class PinState implements NgxsOnInit {
     this.pinApi.listPins().subscribe(
       pins => ctx.patchState({ pins })
     );
-    this.pinApi.listenPinChanges().subscribe(pinChanges => {
+    this.pinApi.listenPinChanges().subscribe(pinChange => {
       const { pins, selectedPin } = ctx.getState();
 
-      const pointUrlChanges = pinChanges.map(({ pointUrl }) => pointUrl);
-
       const patchedPins = [
-        ...pins.filter(({ pointUrl }) => !pointUrlChanges.includes(pointUrl)), // remove all changed pins
-        ...pinChanges // (re)add all inserted or modified pins
-          .filter(({ eventName }) => eventName !== 'REMOVE')
-          .map(({ NewImage }) => NewImage)];
+        ...pins.filter(({ pointUrl }) => pointUrl !== pinChange.pointUrl), // remove changed pin
+        ...(pinChange.eventName !== 'REMOVE' ? [pinChange.NewImage] : [])  // (re)add inserted or modified pin
+      ];
 
-      const selectedPinChange = pinChanges.find(({ pointUrl }) => (selectedPin as SavedPin)?.pointUrl === pointUrl);
-      if (selectedPinChange) { // patch selected pin
+      // patch selected pin
+      if ((selectedPin as SavedPin)?.pointUrl === pinChange.pointUrl) {
         const fallbackSelection = selectedPin
           ? { point: selectedPin.point, address: selectedPin.address }
           : undefined;
         ctx.patchState({
           pins: patchedPins,
-          selectedPin: selectedPinChange.eventName === 'REMOVE' ? fallbackSelection : selectedPinChange.NewImage
+          selectedPin: pinChange.eventName === 'REMOVE' ? fallbackSelection : pinChange.NewImage
         });
       } else {
         ctx.patchState({ pins: patchedPins });

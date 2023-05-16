@@ -46,8 +46,11 @@ export class CdkWorkshopStack extends Stack {
       removalPolicy: RemovalPolicy.DESTROY
     });
 
+    const websocketLambdaEntry = resolve(rootPath, 'lib/api/websocket-lambda.ts')
+
     const connectHandler = new NodejsFunction(this, 'ConnectHandler',{
-      entry: resolve(rootPath, 'lib/ws/connect-lambda.ts'),
+      entry: websocketLambdaEntry,
+      handler: 'connect',
       runtime: Runtime.NODEJS_16_X,
       bundling: { externalModules: ['aws-sdk'] },
       environment: {
@@ -57,7 +60,8 @@ export class CdkWorkshopStack extends Stack {
     connectionsTable.grantReadWriteData(connectHandler);
 
     const disconnectHandler = new NodejsFunction(this, 'DisconnectHandler',{
-      entry: resolve(rootPath, 'lib/ws/disconnect-lambda.ts'),
+      entry: websocketLambdaEntry,
+      handler: 'disconnect',
       runtime: Runtime.NODEJS_16_X,
       bundling: { externalModules: ['aws-sdk'] },
       environment: {
@@ -67,7 +71,8 @@ export class CdkWorkshopStack extends Stack {
     connectionsTable.grantReadWriteData(disconnectHandler);
 
     const sendMessageHandler = new NodejsFunction(this, 'SendMessageHandler', {
-      entry: resolve(rootPath, 'lib/ws/send-message-lambda.ts'),
+      entry: websocketLambdaEntry,
+      handler: 'sendMessage',
       runtime: Runtime.NODEJS_16_X,
       bundling: { externalModules: ['aws-sdk'] },
       environment: {
@@ -77,7 +82,8 @@ export class CdkWorkshopStack extends Stack {
     connectionsTable.grantReadWriteData(sendMessageHandler);
 
     const defaultHandler = new NodejsFunction(this, 'DefaultHandler', {
-      entry: resolve(rootPath, 'lib/ws/default-lambda.ts'),
+      entry: websocketLambdaEntry,
+      handler: 'defaultHandler',
       runtime: Runtime.NODEJS_16_X,
       bundling: { externalModules: ['aws-sdk'] },
       environment: {
@@ -87,7 +93,7 @@ export class CdkWorkshopStack extends Stack {
 
     const webSocketApi = new WebSocketApi(this, 'WebSocketApi', {
       connectRouteOptions: { integration: new WebSocketLambdaIntegration('ConnectIntegration', connectHandler) },
-      disconnectRouteOptions: { integration: new WebSocketLambdaIntegration('DisconnectIntegration',disconnectHandler) },
+      disconnectRouteOptions: { integration: new WebSocketLambdaIntegration('DisconnectIntegration', disconnectHandler) },
       defaultRouteOptions: { integration: new WebSocketLambdaIntegration('DefaultIntegration', defaultHandler), returnResponse: true },
     });
     webSocketApi.addRoute('sendmessage', {

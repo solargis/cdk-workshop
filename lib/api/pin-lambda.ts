@@ -1,5 +1,5 @@
 import { APIGatewayProxyEvent, Context } from 'aws-lambda';
-import { DynamoDB } from 'aws-sdk';
+import { DocumentClient } from 'aws-sdk/clients/dynamodb';
 import { parse } from 'path';
 import { v4 } from 'uuid';
 
@@ -9,7 +9,7 @@ import { pointToUrl } from '../shared/utils/point.utils';
 
 const pinTable = process.env.PIN_TABLE as string;
 
-const dynamo = new DynamoDB.DocumentClient({
+const dynamo = new DocumentClient({
   endpoint: process.env.DYNAMODB_ENDPOINT
 });
 

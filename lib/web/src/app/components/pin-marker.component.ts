@@ -1,10 +1,9 @@
 import { AfterViewInit, Component, ElementRef, HostListener, Inject, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { Select, Store } from '@ngxs/store';
 import * as isEqual from 'lodash.isequal';
-import { interval, Observable, of, Subscription } from 'rxjs';
-import { distinctUntilChanged, filter, first, map, switchMap, timeout } from 'rxjs/operators';
+import { Observable, Subscription } from 'rxjs';
+import { distinctUntilChanged, filter, map } from 'rxjs/operators';
 
-import { PinApiService } from '../services/pin-api.service';
 import { PinFromMap, PinState } from '../state/pin.state';
 import { Pin, SavedImage, SavedPin } from 'shared/types/pin.types';
 
@@ -20,9 +19,9 @@ export class PinMarkerComponent implements OnInit, OnDestroy, AfterViewInit {
 
   selected$: Observable<boolean>;
   pin$: Observable<SavedPin>;
-  
+
   thumbnail: SavedImage;
-  
+
   subscription: Subscription;
   public onDestroyCallback: () => void;
 
@@ -31,7 +30,6 @@ export class PinMarkerComponent implements OnInit, OnDestroy, AfterViewInit {
 
   constructor(private elm: ElementRef,
               private store: Store,
-              private pinApi: PinApiService,
               @Inject('pointUrl') private pointUrl: string) {}
 
   ngOnInit() {
@@ -46,20 +44,8 @@ export class PinMarkerComponent implements OnInit, OnDestroy, AfterViewInit {
     );
 
     const thumbnail$ = this.pin$.pipe(
-      filter(pin => !!pin),
-      switchMap(pin => {
-        if (pin.thumbnail) {
-          return of(pin.thumbnail);
-        } else {
-          return interval(500).pipe(
-            switchMap((n: number) => this.pinApi.getPin(this.pointUrl)),
-            map(pin => pin && pin.thumbnail),
-            filter(thumbnail => !!thumbnail),
-            first(),
-            timeout(30000)
-          )
-        }
-      })
+      filter(pin => !!pin?.thumbnail),
+      map(pin => pin.thumbnail)
     );
     this.subscription = thumbnail$.subscribe(
       thumbnail => this.thumbnail = thumbnail
@@ -69,13 +55,13 @@ export class PinMarkerComponent implements OnInit, OnDestroy, AfterViewInit {
   ngAfterViewInit() {
     this.adjustMarker();
   }
-  
+
   @HostListener('click', ['$event'])
   onClick(event: MouseEvent) {
     this.store.dispatch(new PinFromMap(this.pointUrl));
     event.stopPropagation();
   }
-  
+
   ngOnDestroy() {
     if (this.subscription) {
       this.subscription.unsubscribe();
@@ -86,7 +72,7 @@ export class PinMarkerComponent implements OnInit, OnDestroy, AfterViewInit {
   private adjustMarker() {
     const arrowHeight = 8;
     const alignWidth = 32; // align in px from left corner
-    
+
     const parentElement = this.elm.nativeElement.parentElement;
     if (parentElement) {
       const height = this.marker.nativeElement.offsetHeight + arrowHeight;
